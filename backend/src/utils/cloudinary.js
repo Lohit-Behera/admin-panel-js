@@ -1,7 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
-import { Response } from "express";
-import { ApiResponse } from "./ApiResponse";
+import { ApiResponse } from "./ApiResponse.js";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "",

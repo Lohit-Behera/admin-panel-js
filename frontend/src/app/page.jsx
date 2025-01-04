@@ -27,29 +27,29 @@ function Home() {
               <h2 className="text-base md:text-xl font-semibold">
                 Total Products
               </h2>
-              <div className="h-full flex justify-between space-x-2 items-center">
+              <div className="h-full flex justify-between space-x-2 items-end">
                 <Package2 />
                 <span className="text-base md:text-xl font-semibold text-center">
                   {getCount.productCount}
                 </span>
               </div>
             </div>
-            <div className="flex flex-col space-y-4 p-4 rounded-md border">
+            <div className="flex flex-col space-y-4 p-4 rounded-md border min-h-40">
               <h2 className="text-base md:text-xl font-semibold">
                 Total Categories
               </h2>
-              <div className="h-full flex justify-between space-x-2 items-center">
+              <div className="h-full flex justify-between space-x-2 items-end">
                 <LayoutGrid />
                 <span className="text-base md:text-xl font-semibold text-center">
                   {getCount.categoryCount}
                 </span>
               </div>
             </div>
-            <div className="flex flex-col space-y-4 p-4 rounded-md border">
+            <div className="flex flex-col space-y-4 p-4 rounded-md border min-h-40">
               <h2 className="text-base md:text-xl font-semibold">
                 Total Blogs
               </h2>
-              <div className="h-full flex justify-between space-x-2 items-center">
+              <div className="h-full flex justify-between space-x-2 items-end">
                 <NotebookPen />
                 <span className="text-base md:text-xl font-semibold text-center">
                   {getCount.blogCount}
