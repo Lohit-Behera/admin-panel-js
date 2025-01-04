@@ -50,7 +50,7 @@ export function DataTable({ columns, data, filter = "name" }) {
   });
 
   return (
-    <div className="rounded-md border p-4">
+    <div className="w-full md:w-[95%] rounded-md border p-4">
       <div className="flex items-center py-4">
         <Input
           placeholder="Filter name..."
