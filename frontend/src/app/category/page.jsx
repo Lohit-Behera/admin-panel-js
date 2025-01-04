@@ -26,10 +26,7 @@ function Category() {
       ) : getAllCategoriesStatus === "failed" ? (
         <p>Error</p>
       ) : getAllCategoriesStatus === "succeeded" ? (
-        <div className="w-full md:w-[95%] grid gap-6">
-          <h2 className="text-lg md:text-2xl font-semibold">All Categories</h2>
-          <DataTable columns={columns} data={categories} />
-        </div>
+        <DataTable columns={columns} data={categories} />
       ) : null}
     </>
   );
