@@ -10,7 +10,6 @@ export const resizeImage = async (req, res, next) => {
     const files = req.files;
 
     if (!files || Object.keys(files).length === 0) {
-      console.log("files");
       return next(); // Skip if no files are uploaded
     }
 

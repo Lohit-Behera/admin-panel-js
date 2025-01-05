@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown, Pencil, Trash2 } from "lucide-react";
+import { ArrowUpDown, LockKeyhole, Pencil, Trash2, Users2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import {
@@ -20,6 +20,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { DataTableColumnHeader } from "@/components/data-table-column-header";
 
 export const columns = [
   {
@@ -39,13 +40,11 @@ export const columns = [
     accessorKey: "name",
     header: ({ column }) => {
       return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Product Name
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
+        <DataTableColumnHeader
+          column={column}
+          title="Product Name"
+          hideButton
+        />
       );
     },
     cell: ({ row }) => <p className="line-clamp-3">{row.original.name}</p>,
@@ -55,60 +54,28 @@ export const columns = [
   {
     accessorKey: "category",
     header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Category
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
+      return <DataTableColumnHeader column={column} title="Category" />;
     },
     cell: ({ row }) => <p className="line-clamp-3">{row.original.category}</p>,
   },
   {
     accessorKey: "amount",
     header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Amount
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
+      return <DataTableColumnHeader column={column} title="Amount" />;
     },
     cell: ({ row }) => <p className="text-center">{row.original.amount}</p>,
   },
   {
     accessorKey: "discount",
     header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Discount
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
+      return <DataTableColumnHeader column={column} title="Discount" />;
     },
     cell: ({ row }) => <p className="text-center">{row.original.discount}</p>,
   },
   {
     accessorKey: "sellingPrice",
     header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Selling Price
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
+      return <DataTableColumnHeader column={column} title="Selling Price" />;
     },
     cell: ({ row }) => (
       <p className="text-center">{row.original.sellingPrice}</p>
@@ -117,25 +84,24 @@ export const columns = [
   {
     accessorKey: "status",
     header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Status
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
+      return <DataTableColumnHeader column={column} title="Status" />;
     },
     cell: ({ row }) => (
       <p className="text-center">
-        {row.original.isPublic ? "Public" : "Private"}
+        {row.original.isPublic ? (
+          <span className="flex items-center">
+            <Users2 className="w-4 h-4 mr-1" /> Public
+          </span>
+        ) : (
+          <span className="flex items-center">
+            <LockKeyhole className="w-4 h-4 mr-1" /> Private
+          </span>
+        )}
       </p>
     ),
   },
   {
     accessorKey: "update",
-    header: () => <p className="hidden sm:table-cell">Update</p>,
     cell: ({ row }) => {
       const router = useRouter();
       return (

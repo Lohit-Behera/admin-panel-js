@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown, Pencil, Trash2 } from "lucide-react";
+import { ArrowUpDown, LockKeyhole, Pencil, Trash2, Users2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   fetchDeleteCategory,
@@ -20,6 +20,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useDispatch } from "react-redux";
+import { DataTableColumnHeader } from "@/components/data-table-column-header";
 
 export const columns = [
   {
@@ -34,41 +35,35 @@ export const columns = [
         />
       );
     },
+    enableHiding: false,
     enableSorting: false,
   },
   {
     accessorKey: "name",
     header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Category Name
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
+      return <DataTableColumnHeader column={column} title="Name" hideButton />;
     },
+    enableHiding: false,
   },
 
   {
     accessorKey: "status",
     header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Status
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
+      return <DataTableColumnHeader column={column} title="Status" />;
     },
     cell: ({ row }) => {
       return (
-        <div className="flex items-center gap-2 w-full h-full">
-          {row.original.isPublic ? "Public" : "Private"}
-        </div>
+        <p className="text-center">
+          {row.original.isPublic ? (
+            <span className="flex items-center">
+              <Users2 className="w-4 h-4 mr-1" /> Public
+            </span>
+          ) : (
+            <span className="flex items-center">
+              <LockKeyhole className="w-4 h-4 mr-1" /> Private
+            </span>
+          )}
+        </p>
       );
     },
   },
