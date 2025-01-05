@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Category } from "../model/categoryModel.js";
-import { uploadFile } from "../utils/cloudinary.js";
+import { uploadFile, deleteFile } from "../utils/cloudinary.js";
 import Joi from "joi";
 
 const createCategory = asyncHandler(async (req, res) => {
@@ -175,6 +175,12 @@ const updateCategory = asyncHandler(async (req, res) => {
         .status(500)
         .json(new ApiResponse(500, null, "Thumbnail upload failed"));
     }
+    // delete the old thumbnail from cloudinary
+    const oldThumbnail = category.thumbnail;
+    if (oldThumbnail) {
+      const publicId = oldThumbnail.split('/').pop().split('.')[0];
+      await deleteFile(publicId, res)
+    }
     // update the category
     category.thumbnail = thumbnailUrl;
   }
@@ -211,10 +217,36 @@ const updateCategory = asyncHandler(async (req, res) => {
     );
 });
 
+// delete category
+const deleteCategory = asyncHandler(async (req, res) => {
+  // get category id from the params
+  const { categoryId } = req.params;
+  // get the category
+  const category = await Category.findById(categoryId);
+  // validate the category
+  if (!category) {
+    return res
+      .status(404)
+      .json(new ApiResponse(404, null, "Category not found"));
+  }
+  // delete thumbnail from cloudinary
+  if (category.thumbnail) {
+    const publicId = category.thumbnail.split('/').pop().split('.')[0];
+    await deleteFile(publicId, res)
+  }
+  // delete the blog
+  await Category.findByIdAndDelete(category._id);
+  // send the response
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "Category deleted successfully"));
+});
+
 export {
   createCategory,
   getAllCategories,
   getAllCategoriesNames,
   getCategory,
   updateCategory,
+  deleteCategory,
 };

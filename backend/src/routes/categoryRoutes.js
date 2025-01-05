@@ -7,6 +7,7 @@ import {
   getAllCategoriesNames,
   getCategory,
   updateCategory,
+  deleteCategory
 } from "../controllers/categoryController.js";
 
 const categoryRouter = Router();
@@ -26,5 +27,6 @@ categoryRouter.patch(
   resizeImage,
   updateCategory
 );
+categoryRouter.delete("/delete/:categoryId", deleteCategory);
 
 export default categoryRouter;

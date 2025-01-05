@@ -15,9 +15,15 @@ function Product() {
   const getAllProductsStatus = useSelector(
     (state) => state.product.getAllProductsStatus
   );
+  const deleteProductStatus = useSelector(
+    (state) => state.product.deleteProductStatus
+  );
   useEffect(() => {
     dispatch(fetchGetAllProducts());
   }, []);
+  useEffect(() => {
+    if (deleteProductStatus === "succeeded") dispatch(fetchGetAllProducts());
+  }, [deleteProductStatus]);
 
   return (
     <>
@@ -32,4 +38,4 @@ function Product() {
   );
 }
 
-export default Product;
+export default withAuth(Product);

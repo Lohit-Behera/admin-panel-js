@@ -1,8 +1,22 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown, Pencil } from "lucide-react";
+import { ArrowUpDown, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { fetchDeleteBlog, resetDeleteBlog } from "@/lib/features/blogSlice";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useDispatch } from "react-redux";
 
 export const columns = [
   {
@@ -29,7 +43,7 @@ export const columns = [
     ),
   },
   {
-    accessorKey: "isPublic",
+    accessorKey: "status",
     header: ({ column }) => (
       <Button
         variant="ghost"
@@ -63,6 +77,58 @@ export const columns = [
         >
           <Pencil />
         </Button>
+      );
+    },
+  },
+  {
+    accessorKey: "delete",
+    header: "Delete",
+    cell: ({ row }) => {
+      const dispatch = useDispatch();
+      const handleDeleteBlog = (id) => {
+        const deleteBlogPromise = dispatch(fetchDeleteBlog(id)).unwrap();
+        toast.promise(deleteBlogPromise, {
+          loading: "Deleting blog... ",
+          success: (data) => {
+            dispatch(resetDeleteBlog());
+            return data.message || "Blog deleted successfully";
+          },
+          error: (error) => {
+            dispatch(resetDeleteBlog());
+            return (
+              error ||
+              error.message ||
+              "Failed to delete blog. Please try again later"
+            );
+          },
+        });
+      };
+      return (
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button size="icon" variant="destructive">
+              <Trash2 />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete{" "}
+                {row.original.title} and remove remove data from our servers.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={() => handleDeleteBlog(row.original._id)}
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       );
     },
   },

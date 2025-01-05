@@ -131,6 +131,30 @@ export const fetchUpdateCategory = createAsyncThunk(
   }
 );
 
+export const fetchDeleteCategory = createAsyncThunk(
+  "category/deleteCategory",
+  async (categoryId, { rejectWithValue }) => {
+    try {
+      const config = {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      };
+      const { data } = await axios.delete(
+        `${baseUrl}/api/v1/categories/delete/${categoryId}`,
+        config
+      );
+      return data;
+    } catch (error) {
+      const errorMessage =
+        error.response && error.response.data
+          ? error.response.data.message
+          : error.message;
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
 const categorySlice = createSlice({
   name: "category",
   initialState: {
@@ -153,8 +177,18 @@ const categorySlice = createSlice({
     updateCategory: { data: "" },
     updateCategoryStatus: "idle",
     updateCategoryError: {},
+
+    deleteCategory: { data: "" },
+    deleteCategoryStatus: "idle",
+    deleteCategoryError: {},
   },
-  reducers: {},
+  reducers: {
+    resetDeleteCategory: (state) => {
+      state.deleteCategory = { data: "" };
+      state.deleteCategoryStatus = "idle";
+      state.deleteCategoryError = {};
+    }
+  },
   extraReducers: (builder) => {
     builder
       // create category
@@ -223,8 +257,23 @@ const categorySlice = createSlice({
         state.updateCategoryStatus = "failed";
         state.updateCategoryError =
           action.payload || "Failed to update category";
+      })
+
+      // delete category
+      .addCase(fetchDeleteCategory.pending, (state) => {
+        state.deleteCategoryStatus = "loading";
+      })
+      .addCase(fetchDeleteCategory.fulfilled, (state, action) => {
+        state.deleteCategoryStatus = "succeeded";
+        state.deleteCategory = action.payload;
+      })
+      .addCase(fetchDeleteCategory.rejected, (state, action) => {
+        state.deleteCategoryStatus = "failed";
+        state.deleteCategoryError =
+          action.payload || "Failed to delete category";
       });
   },
 });
 
+export const { resetDeleteCategory } = categorySlice.actions;
 export default categorySlice.reducer;

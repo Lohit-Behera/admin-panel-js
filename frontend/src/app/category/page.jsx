@@ -16,9 +16,19 @@ function Category() {
   const getAllCategoriesStatus = useSelector(
     (state) => state.category.getAllCategoriesStatus
   );
+
+  const deleteCategoryStatus = useSelector(
+    (state) => state.category.deleteCategoryStatus
+  );
   useEffect(() => {
     dispatch(fetchGetAllCategories());
   }, []);
+
+  useEffect(() => {
+    if (deleteCategoryStatus === "succeeded") {
+      dispatch(fetchGetAllCategories());
+    }
+  }, [deleteCategoryStatus]);
   return (
     <>
       {getAllCategoriesStatus === "loading" ? (

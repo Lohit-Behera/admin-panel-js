@@ -42,33 +42,35 @@ const createProduct = asyncHandler(async (req, res) => {
   } = value;
 
   // get thumbnail from the request
-  const thumbnail = req.file;
+  const thumbnail = req.files.thumbnail[0];
+  
   // validate the image
   if (!thumbnail) {
     return res
       .status(400)
-      .json(new ApiResponse(400, null, "Image is required"));
+      .json(new ApiResponse(400, null, "Thumbnail is required"));
   }
+  
   if (
     thumbnail.mimetype !== "image/jpeg" &&
-    thumbnail.mimetype !== "image/png"
+    thumbnail.mimetype !== "image/png" 
   ) {
     return res
       .status(400)
-      .json(new ApiResponse(400, null, "Invalid image format"));
+      .json(new ApiResponse(400, null, "Thumbnail invalid image format"));
   }
   // get big image from the request
-  const bigImage = req.file;
+  const bigImage = req.files.bigImage[0];
   // validate the image
   if (!bigImage) {
     return res
       .status(400)
-      .json(new ApiResponse(400, null, "Image is required"));
+      .json(new ApiResponse(400, null, "Big image is required"));
   }
   if (bigImage.mimetype !== "image/jpeg" && bigImage.mimetype !== "image/png") {
     return res
       .status(400)
-      .json(new ApiResponse(400, null, "Invalid image format"));
+      .json(new ApiResponse(400, null, "Big image invalid image format"));
   }
   // upload image to cloudinary
   const thumbnailUrl = await uploadFile(thumbnail);
@@ -216,16 +218,61 @@ const updateProduct = asyncHandler(async (req, res) => {
   }
 
   // get thumbnail
-  const thumbnail = req.file;
+  const thumbnail = req.files.thumbnail[0];
   if (thumbnail) {
-    deleteFile(product.thumbnail, res); // delete old thumbnail
+    if (
+      thumbnail.mimetype !== "image/jpeg" &&
+      thumbnail.mimetype !== "image/png"
+    ) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, null, "Invalid image format"));
+    }
+    // upload image to cloudinary
     const thumbnailUrl = await uploadFile(thumbnail);
+    // validate the image url
     if (!thumbnailUrl) {
       return res
         .status(500)
-        .json(new ApiResponse(500, null, "Image upload failed"));
+        .json(new ApiResponse(500, null, "Thumbnail upload failed"));
     }
-    product.thumbnail = thumbnailUrl; // update thumbnail
+    // delete the old thumbnail from cloudinary
+    const oldThumbnail = product.thumbnail;
+    if (oldThumbnail) {
+      const publicId = oldThumbnail.split('/').pop().split('.')[0];
+      await deleteFile(publicId, res)
+    }
+    // update the category
+    product.thumbnail = thumbnailUrl;
+  }
+
+  // get big image
+  const bigImage = req.files.bigImage[0];
+  if (bigImage) {
+    if (
+      bigImage.mimetype !== "image/jpeg" &&
+      bigImage.mimetype !== "image/png"
+    ) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, null, "Invalid image format"));
+    }
+    // upload image to cloudinary
+    const bigImageUrl = await uploadFile(bigImage);
+    // validate the image url
+    if (!bigImageUrl) {
+      return res
+        .status(500)
+        .json(new ApiResponse(500, null, "Big image upload failed"));
+    }
+    // delete the old big image from cloudinary
+    const oldBigImage = product.bigImage;
+    if (oldBigImage) {    
+      const publicId = oldBigImage.split('/').pop().split('.')[0];
+      await deleteFile(publicId, res)
+    }
+    // update the category
+    product.bigImage = bigImageUrl;
   }
 
   // Update fields if they are provided and different
@@ -251,7 +298,7 @@ const updateProduct = asyncHandler(async (req, res) => {
     }
   });
 
-  if (!hasUpdates && !thumbnail) {
+  if (!hasUpdates && !thumbnail && !bigImage) {
     return res
       .status(400)
       .json(new ApiResponse(400, null, "No fields to update"));
@@ -271,10 +318,46 @@ const updateProduct = asyncHandler(async (req, res) => {
       new ApiResponse(200, updatedProduct._id, "Product updated successfully")
     );
 });
+
+// delete product
+const deleteProduct = asyncHandler(async (req, res) => {
+  // get product id from the params
+  const { productId } = req.params;
+  // get the product
+  const product = await Product.findById(productId);
+  if (!product) {
+    return res
+      .status(404)
+      .json(new ApiResponse(404, null, "Product not found"));
+  }
+  // delete thumbnail from cloudinary
+  if (product.thumbnail) {
+      const publicId = product.thumbnail.split('/').pop().split('.')[0];
+      await deleteFile(publicId, res)
+    }
+  // delete big image from cloudinary
+  if (product.bigImage) {
+      const publicId = product.bigImage.split('/').pop().split('.')[0];
+      await deleteFile(publicId, res)
+  }
+  // delete the product
+  const deletedProduct = await Product.findByIdAndDelete(productId);
+  if (!deletedProduct) {
+    return res
+      .status(500)
+      .json(new ApiResponse(500, null, "Product delete failed"));
+  }
+  // send the response
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "Product deleted successfully"));
+});
+
 export {
   createProduct,
   getProduct,
   getAllProducts,
   getRecentProducts,
   updateProduct,
+  deleteProduct,
 };

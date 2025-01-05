@@ -1,6 +1,6 @@
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { uploadFile } from "../utils/cloudinary.js";
+import { uploadFile, deleteFile } from "../utils/cloudinary.js";
 import { Blog } from "../model/blogModel.js";
 import Joi from "joi";
 
@@ -175,6 +175,13 @@ const updateBlog = asyncHandler(async (req, res) => {
         .status(500)
         .json(new ApiResponse(500, null, "Image upload failed"));
     }
+    //delete the old thumbnail from cloudinary
+    const oldThumbnail = blog.thumbnail;
+    if (oldThumbnail) {
+      const publicId = oldThumbnail.split('/').pop().split('.')[0];
+    await deleteFile(publicId, res)
+    }
+    // update thumbnail
     blog.thumbnail = thumbnailUrl;
   }
 
@@ -216,4 +223,26 @@ const updateBlog = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, updatedBlog, "Blog updated successfully"));
 });
 
-export { createBlog, getBlog, getAllBlogs, getRecentBlogs, updateBlog };
+// delete blog
+const deleteBlog = asyncHandler(async (req, res) => {
+  // get blog id from the params
+  const { blogId } = req.params;
+  // get the blog
+  const blog = await Blog.findById(blogId);
+  if (!blog) {
+    return res.status(404).json(new ApiResponse(404, null, "Blog not found"));
+  }
+  // delete thumbnail from cloudinary
+  if (blog.thumbnail) {
+    const publicId = blog.thumbnail.split('/').pop().split('.')[0];
+    await deleteFile(publicId, res)
+  }
+  // delete the blog
+  await Blog.findByIdAndDelete(blog._id);
+  // send the response
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "Blog deleted successfully"));
+});
+
+export { createBlog, getBlog, getAllBlogs, getRecentBlogs, updateBlog, deleteBlog };

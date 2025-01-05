@@ -7,6 +7,7 @@ import {
   getAllBlogs,
   getRecentBlogs,
   updateBlog,
+  deleteBlog
 } from "../controllers/blogController.js";
 
 const blogRouter = Router();
@@ -21,5 +22,6 @@ blogRouter.patch(
   resizeImage,
   updateBlog
 );
+blogRouter.delete("/delete/:blogId", deleteBlog);
 
 export default blogRouter;

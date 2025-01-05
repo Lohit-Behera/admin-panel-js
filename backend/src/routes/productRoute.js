@@ -7,6 +7,7 @@ import {
   getAllProducts,
   getRecentProducts,
   updateProduct,
+  deleteProduct
 } from "../controllers/productController.js";
 
 const productRouter = Router();
@@ -26,8 +27,11 @@ productRouter.get("/get/recent", getRecentProducts);
 // update product
 productRouter.patch(
   "/update/:productId",
-  upload.single("thumbnail"),
+  upload.fields([{ name: "thumbnail" }, { name: "bigImage" }]),
   resizeImage,
   updateProduct
 );
+// delete product
+productRouter.delete("/delete/:productId", deleteProduct);
+
 export default productRouter;

@@ -1,8 +1,25 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown, Pencil } from "lucide-react";
+import { ArrowUpDown, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useDispatch } from "react-redux";
+import {
+  fetchDeleteProduct,
+  resetDeleteProduct,
+} from "@/lib/features/productSlice";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export const columns = [
   {
@@ -98,7 +115,7 @@ export const columns = [
     ),
   },
   {
-    accessorKey: "isPublic",
+    accessorKey: "status",
     header: ({ column }) => {
       return (
         <Button
@@ -130,6 +147,63 @@ export const columns = [
         >
           <Pencil />
         </Button>
+      );
+    },
+    enableHiding: false,
+    enableSorting: false,
+  },
+  {
+    accessorKey: "delete",
+    cell: ({ row }) => {
+      const dispatch = useDispatch();
+      const handleDelete = (id) => {
+        const deleteProductPromise = dispatch(fetchDeleteProduct(id)).unwrap();
+        toast.promise(deleteProductPromise, {
+          loading: "Deleting product...",
+          success: (data) => {
+            dispatch(resetDeleteProduct());
+            return data.message || "Product deleted successfully";
+          },
+          error: (error) => {
+            dispatch(resetDeleteProduct());
+            return (
+              error ||
+              error.message ||
+              "Failed to delete product. Please try again later"
+            );
+          },
+        });
+      };
+      return (
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              size="icon"
+              variant="destructive"
+              className="sm:flex justify-center hidden"
+            >
+              <Trash2 />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete{" "}
+                {row.original.name} and remove data from our servers.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => handleDelete(row.original._id)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Continue
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       );
     },
     enableHiding: false,

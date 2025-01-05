@@ -115,6 +115,24 @@ export const fetchUpdateProduct = createAsyncThunk(
   }
 );
 
+export const fetchDeleteProduct = createAsyncThunk(
+  "product/deleteProduct",
+  async (productId, { rejectWithValue }) => {
+    try {
+      const { data } = await axios.delete(
+        `${baseUrl}/api/v1/products/delete/${productId}`
+      );
+      return data;
+    } catch (error) {
+      const errorMessage =
+        error.response && error.response.data
+          ? error.response.data.message
+          : error.message;
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
 // slice
 const productSlice = createSlice({
   name: "product",
@@ -138,8 +156,18 @@ const productSlice = createSlice({
     updateProduct: { data: "" },
     updateProductStatus: "idle",
     updateProductError: {},
+
+    deleteProduct: { data: "" },
+    deleteProductStatus: "idle",
+    deleteProductError: {},
   },
-  reducers: {},
+  reducers: {
+    resetDeleteProduct: (state) => {
+      state.deleteProduct = { data: "" };
+      state.deleteProductStatus = "idle";
+      state.deleteProductError = {};
+    }
+  },
   extraReducers: (builder) => {
     builder
       // Create Product
@@ -206,8 +234,23 @@ const productSlice = createSlice({
       .addCase(fetchUpdateProduct.rejected, (state, action) => {
         state.updateProductStatus = "failed";
         state.updateProductError = action.payload || "Failed to update product";
+      })
+
+      // Delete Product
+      .addCase(fetchDeleteProduct.pending, (state) => {
+        state.deleteProductStatus = "loading";
+      })
+      .addCase(fetchDeleteProduct.fulfilled, (state, action) => {
+        state.deleteProductStatus = "succeeded";
+        state.deleteProduct = action.payload;
+      })
+      .addCase(fetchDeleteProduct.rejected, (state, action) => {
+        state.deleteProductStatus = "failed";
+        state.deleteProductError = action.payload || "Failed to delete product";
       });
   },
 });
+
+export const { resetDeleteProduct } = productSlice.actions;
 
 export default productSlice.reducer;

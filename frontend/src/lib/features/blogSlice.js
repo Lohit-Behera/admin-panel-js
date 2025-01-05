@@ -30,6 +30,24 @@ export const fetchCreateBlog = createAsyncThunk(
   }
 );
 
+export const fetchDeleteBlog = createAsyncThunk(
+  "blog/deleteBlog",
+  async (blogId, { rejectWithValue }) => {
+    try {
+      const { data } = await axios.delete(
+        `${baseUrl}/api/v1/blogs/delete/${blogId}`
+      );
+      return data;
+    } catch (error) {
+      const errorMessage =
+        error.response && error.response.data
+          ? error.response.data.message
+          : error.message;
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
 export const fetchGetBlog = createAsyncThunk(
   "blog/getBlog",
   async (blogId, { rejectWithValue }) => {
@@ -128,8 +146,18 @@ export const blogSlice = createSlice({
     updateBlog: { data: "" },
     updateBlogStatus: "idle",
     updateBlogError: {},
+
+    deleteBlog: { data: "" },
+    deleteBlogStatus: "idle",
+    deleteBlogError: {},
   },
-  reducers: {},
+  reducers: {
+    resetDeleteBlog: (state) => {
+      state.deleteBlog = { data: "" };
+      state.deleteBlogStatus = "idle";
+      state.deleteBlogError = {};
+    },
+  },
   extraReducers: (builder) => {
     builder
       // Create Blog
@@ -195,8 +223,22 @@ export const blogSlice = createSlice({
       .addCase(fetchUpdateBlog.rejected, (state, action) => {
         state.updateBlogStatus = "failed";
         state.updateBlogError = action.payload || "Failed to update blog";
+      })
+
+      // Delete Blog
+      .addCase(fetchDeleteBlog.pending, (state) => {
+        state.deleteBlogStatus = "loading";
+      })
+      .addCase(fetchDeleteBlog.fulfilled, (state, action) => {
+        state.deleteBlogStatus = "succeeded";
+        state.deleteBlog = action.payload;
+      })
+      .addCase(fetchDeleteBlog.rejected, (state, action) => {
+        state.deleteBlogStatus = "failed";
+        state.deleteBlogError = action.payload || "Failed to delete blog";
       });
   },
 });
 
+export const { resetDeleteBlog } = blogSlice.actions;
 export default blogSlice.reducer;

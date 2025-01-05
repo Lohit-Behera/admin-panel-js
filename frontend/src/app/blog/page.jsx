@@ -2,7 +2,7 @@
 
 import { useDispatch, useSelector } from "react-redux";
 import { fetchGetAllBlogs } from "@/lib/features/blogSlice";
-import { useLayoutEffect } from "react";
+import { useEffect } from "react";
 import { DataTable } from "@/components/data-table";
 import { columns } from "./columns";
 import { withAuth } from "@/components/withAuth";
@@ -16,11 +16,19 @@ function AllBlogs() {
     (state) => state.blog.getAllBlogsStatus
   );
 
-  useLayoutEffect(() => {
+  const deleteBlogStatus = useSelector((state) => state.blog.deleteBlogStatus);
+
+  useEffect(() => {
     if (getAllBlogs.length === 0) {
       dispatch(fetchGetAllBlogs());
     }
   }, []);
+
+  useEffect(() => {
+    if (deleteBlogStatus === "succeeded") {
+      dispatch(fetchGetAllBlogs());
+    }
+  }, [deleteBlogStatus]);
   return (
     <>
       {getAllBlogsStatus === "loading" ? (

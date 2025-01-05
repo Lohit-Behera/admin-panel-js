@@ -5,59 +5,60 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 
 sharp.cache(false);
 
-export const resizeImage = async (
-  req,
-  res,
-  next
-) => {
+export const resizeImage = async (req, res, next) => {
   try {
     const files = req.files;
 
-    if (!files || files.length === 0) {
+    if (!files || Object.keys(files).length === 0) {
+      console.log("files");
       return next(); // Skip if no files are uploaded
     }
 
-    for (const file of files) {
-      const originalName = file.originalname;
-      const metadata = await sharp(file.buffer).metadata();
-      const aspectRatio = (metadata.width || 1) / (metadata.height || 1);
+    for (const key of Object.keys(files)) {
+      const fileArray = Array.isArray(files[key]) ? files[key] : [files[key]];
 
-      let newWidth = Math.min(1440, metadata.width || 1440);
-      let newHeight = Math.round(newWidth / aspectRatio);
+      for (const file of fileArray) {
+        const originalName = file.originalname;
+        const metadata = await sharp(file.buffer).metadata();
+        const aspectRatio = (metadata.width || 1) / (metadata.height || 1);
 
-      if (newHeight > 1080) {
-        newHeight = 1080;
-        newWidth = Math.round(newHeight * aspectRatio);
-      }
+        let newWidth = Math.min(1440, metadata.width || 1440);
+        let newHeight = Math.round(newWidth / aspectRatio);
 
-      if (process.env.MEMORY === "true") {
-        // If processing in memory (buffer)
-        const resizedImageBuffer = await sharp(file.buffer)
-          .resize(newWidth, newHeight)
-          .toFormat("jpeg")
-          .jpeg({ quality: 70 })
-          .toBuffer();
+        if (newHeight > 1080) {
+          newHeight = 1080;
+          newWidth = Math.round(newHeight * aspectRatio);
+        }
 
-        file.buffer = resizedImageBuffer;
-        file.filename = `resized-${Date.now()}-${originalName}`;
-      } else {
-        // If processing on disk (toFile)
-        const imagePath = path.join(__dirname, file.path);
-        const outputFilePath = path.join(
-          __dirname,
-          "./public/temp",
-          `resized-${Date.now()}-${file.filename}`
-        );
+        if (process.env.MEMORY === "true") {
+          // If processing in memory (buffer)
+          const resizedImageBuffer = await sharp(file.buffer)
+            .resize(newWidth, newHeight)
+            .toFormat("jpeg")
+            .jpeg({ quality: 70 })
+            .toBuffer();
 
-        await sharp(imagePath)
-          .resize(newWidth, newHeight)
-          .toFormat("jpeg")
-          .jpeg({ quality: 70 })
-          .toFile(outputFilePath);
+          file.buffer = resizedImageBuffer;
+          file.filename = `resized-${Date.now()}-${originalName}`;
+        } else {
+          // If processing on disk (toFile)
+          const imagePath = path.join(__dirname, file.path);
+          const outputFilePath = path.join(
+            __dirname,
+            "./public/temp",
+            `resized-${Date.now()}-${file.filename}`
+          );
 
-        fs.unlinkSync(imagePath); // Delete the original file after resizing
-        file.path = outputFilePath;
-        file.filename = `resized-${Date.now()}-${file.filename}`;
+          await sharp(imagePath)
+            .resize(newWidth, newHeight)
+            .toFormat("jpeg")
+            .jpeg({ quality: 70 })
+            .toFile(outputFilePath);
+
+          fs.unlinkSync(imagePath); // Delete the original file after resizing
+          file.path = outputFilePath;
+          file.filename = `resized-${Date.now()}-${file.filename}`;
+        }
       }
     }
 
@@ -69,7 +70,7 @@ export const resizeImage = async (
       .json(
         new ApiResponse(
           500,
-          (err).message,
+          err.message,
           "Something went wrong while processing the images"
         )
       );
