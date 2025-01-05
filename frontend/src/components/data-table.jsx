@@ -27,9 +27,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DataTablePagination } from "@/components/table-pagination";
 
-export function DataTable({ columns, data, filter = "name" }) {
+export function DataTable({ columns, data, filter = "name", search = "" }) {
   const [sorting, setSorting] = useState([]);
-  const [columnFilters, setColumnFilters] = useState([]);
+  const [columnFilters, setColumnFilters] = useState([
+    { id: filter, value: search },
+  ]);
   const [columnVisibility, setColumnVisibility] = useState({});
 
   const table = useReactTable({

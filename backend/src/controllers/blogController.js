@@ -68,7 +68,7 @@ const createBlog = asyncHandler(async (req, res) => {
   // send the response
   return res
     .status(200)
-    .json(new ApiResponse(200, blog._id, "Blog created successfully"));
+    .json(new ApiResponse(200, blog.title, "Blog created successfully"));
 });
 
 // get blog

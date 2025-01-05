@@ -108,7 +108,7 @@ const createProduct = asyncHandler(async (req, res) => {
   return res
     .status(201)
     .json(
-      new ApiResponse(201, createdProduct._id, "Product created successfully")
+      new ApiResponse(201, createdProduct.name, "Product created successfully")
     );
 });
 

@@ -6,9 +6,13 @@ import { fetchGetAllProducts } from "@/lib/features/productSlice";
 import { DataTable } from "@/components/data-table";
 import { columns } from "./columns";
 import { withAuth } from "@/components/withAuth";
+import { useSearchParams } from "next/navigation";
 
 function Product() {
   const dispatch = useDispatch();
+  const searchParams = useSearchParams();
+  const search = searchParams.get("search");
+
   const getAllProducts = useSelector(
     (state) => state.product.getAllProducts.data
   );
@@ -32,7 +36,7 @@ function Product() {
       ) : getAllProductsStatus === "failed" ? (
         <div>Error</div>
       ) : getAllProductsStatus === "succeeded" ? (
-        <DataTable columns={columns} data={getAllProducts} />
+        <DataTable columns={columns} data={getAllProducts} search={search} />
       ) : null}
     </>
   );

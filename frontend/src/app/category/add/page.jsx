@@ -60,7 +60,7 @@ function AddCategory() {
     toast.promise(createCategoryPromise, {
       loading: "Creating category...",
       success: (data) => {
-        router.push(`/category`);
+        router.push(`/category?search=${data.data}`);
         return data.message || "Category created successfully";
       },
       error: (error) => {

@@ -73,7 +73,7 @@ function CreateBlog() {
     toast.promise(createBlogPromise, {
       loading: "Creating blog...",
       success: (data) => {
-        router.push(`/blog/${data.data}`);
+        router.push(`/blog?search=${data.data}`);
         return data.message || "Blog created successfully";
       },
       error: (error) => {

@@ -6,9 +6,14 @@ import { useEffect } from "react";
 import { DataTable } from "@/components/data-table";
 import { columns } from "./columns";
 import { withAuth } from "@/components/withAuth";
+import { useSearchParams } from "next/navigation";
 
 function AllBlogs() {
   const dispatch = useDispatch();
+
+  const searchParams = useSearchParams();
+
+  const search = searchParams.get("search");
 
   const getAllBlogs = useSelector((state) => state.blog.getAllBlogs.data);
 
@@ -36,7 +41,12 @@ function AllBlogs() {
       ) : getAllBlogsStatus === "failed" ? (
         <div>Error</div>
       ) : getAllBlogsStatus === "succeeded" ? (
-        <DataTable columns={columns} data={getAllBlogs} filter="title" />
+        <DataTable
+          columns={columns}
+          data={getAllBlogs}
+          filter="title"
+          search={search}
+        />
       ) : null}
     </>
   );

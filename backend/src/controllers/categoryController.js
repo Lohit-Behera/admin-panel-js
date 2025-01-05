@@ -66,7 +66,7 @@ const createCategory = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(
-      new ApiResponse(200, createdCategory, "Category created successfully")
+      new ApiResponse(200, createdCategory.name, "Category created successfully")
     );
 });
 
