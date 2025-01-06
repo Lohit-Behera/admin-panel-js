@@ -11,8 +11,7 @@ import { useSearchParams } from "next/navigation";
 function Product() {
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
-  const search = searchParams.get("search");
-
+  const search = searchParams.get("search") || "";
   const getAllProducts = useSelector(
     (state) => state.product.getAllProducts.data
   );

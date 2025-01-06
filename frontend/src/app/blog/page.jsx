@@ -13,7 +13,7 @@ function AllBlogs() {
 
   const searchParams = useSearchParams();
 
-  const search = searchParams.get("search");
+  const search = searchParams.get("search") || "";
 
   const getAllBlogs = useSelector((state) => state.blog.getAllBlogs.data);
 
@@ -24,9 +24,7 @@ function AllBlogs() {
   const deleteBlogStatus = useSelector((state) => state.blog.deleteBlogStatus);
 
   useEffect(() => {
-    if (getAllBlogs.length === 0) {
-      dispatch(fetchGetAllBlogs());
-    }
+    dispatch(fetchGetAllBlogs());
   }, []);
 
   useEffect(() => {
