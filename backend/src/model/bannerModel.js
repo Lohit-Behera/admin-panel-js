@@ -2,15 +2,7 @@ import mongoose, { Schema } from "mongoose";
 
 const bannerSchema = new Schema(
   {
-    imageOne: {
-      type: String,
-      required: true,
-    },
-    imageTwo: {
-      type: String,
-      required: true,
-    },
-    imageThree: {
+    image: {
       type: String,
       required: true,
     },

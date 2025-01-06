@@ -15,8 +15,6 @@ export function withAuth(Component) {
       }
     }, [userInfo]);
 
-    if (!userInfo) return null;
-
     return <Component {...props} />;
   };
 }

@@ -1,12 +1,12 @@
 import { Router } from "express";
 import { upload } from "../middlewares/multerMiddleware.js";
 import { resizeImage } from "../middlewares/resizeMiddleware.js";
-import { createBanner, getBanner, updateBanner } from "../controllers/bannerController.js";
+import { createBanner, getAllBanner, deleteBanner } from "../controllers/bannerController.js";
 
 const bannerRouter = Router();
 
-bannerRouter.post("/create", upload.fields([{ name: "imageOne" }, { name: "imageTwo" }, { name: "imageThree" }]), resizeImage, createBanner);
-bannerRouter.get("/get", getBanner);
-bannerRouter.patch("/update", upload.fields([{ name: "imageOne" }, { name: "imageTwo" }, { name: "imageThree" }]), resizeImage, updateBanner);
+bannerRouter.post("/create", upload.single("image"), resizeImage, createBanner);
+bannerRouter.get("/get", getAllBanner);
+bannerRouter.delete("/delete/:bannerId", deleteBanner);
 
 export default bannerRouter

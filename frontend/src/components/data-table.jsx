@@ -27,7 +27,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DataTablePagination } from "@/components/table-pagination";
 
-export function DataTable({ columns, data, filter = "name", search = "" }) {
+export function DataTable({
+  columns,
+  data,
+  filter = "name",
+  search = "",
+  searchFunction = true,
+}) {
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([
     { id: filter, value: search },
@@ -54,14 +60,16 @@ export function DataTable({ columns, data, filter = "name", search = "" }) {
   return (
     <div className="relative w-full md:w-[95%] min-h-[85vh] rounded-md border p-4">
       <div className="flex items-center py-4">
-        <Input
-          placeholder="Filter name..."
-          value={table.getColumn(filter)?.getFilterValue() ?? ""}
-          onChange={(event) =>
-            table.getColumn(filter)?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
+        {searchFunction && (
+          <Input
+            placeholder="Filter name..."
+            value={table.getColumn(filter)?.getFilterValue() ?? ""}
+            onChange={(event) =>
+              table.getColumn(filter)?.setFilterValue(event.target.value)
+            }
+            className="max-w-sm"
+          />
+        )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">

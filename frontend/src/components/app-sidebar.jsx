@@ -66,6 +66,19 @@ const data = {
         },
       ],
     },
+    {
+      title: "Banner",
+      items: [
+        {
+          title: "Add Banner",
+          url: "/banner/add",
+        },
+        {
+          title: "All Banner",
+          url: "/banner",
+        },
+      ],
+    },
   ],
 };
 

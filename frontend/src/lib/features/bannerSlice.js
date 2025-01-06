@@ -43,19 +43,12 @@ export const fetchGetBanner = createAsyncThunk(
     }
 );
 
-export const fetchUpdateBanner = createAsyncThunk(
-    "banner/updateBanner",
-    async (banner, { rejectWithValue }) => {
+export const fetchDeleteBanner = createAsyncThunk(
+    "banner/deleteBanner",
+    async (bannerId, { rejectWithValue }) => {
         try {
-            const config = {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-            };
-            const { data } = await axios.put(
-                `${baseUrl}/api/v1/banners/update`,
-                banner,
-                config
+            const { data } = await axios.delete(
+                `${baseUrl}/api/v1/banners/delete/${bannerId}`
             );
             return data;
         } catch (error) {
@@ -75,15 +68,21 @@ const bannerSlice = createSlice({
         createBannerStatus: "idle",
         createBannerError: {},
 
-        getBanner: {},
+        getBanner: {data: []},
         getBannerStatus: "idle",
         getBannerError: {},
 
-        updateBanner: {},
-        updateBannerStatus: "idle",
-        updateBannerError: {},
+        deleteBanner: {},
+        deleteBannerStatus: "idle",
+        deleteBannerError: {},
     },
-    reducers: {},
+    reducers: {
+        resetDeleteBanner: (state) => {
+            state.deleteBanner = {};
+            state.deleteBannerStatus = "idle";
+            state.deleteBannerError = {};
+        }
+    },
     extraReducers: (builder) => {
         builder
         // Create Banner
@@ -110,19 +109,20 @@ const bannerSlice = createSlice({
                 state.getBannerStatus = "failed";
                 state.getBannerError = action.payload;
             })
-            // Update Banner
-            .addCase(fetchUpdateBanner.pending, (state) => {
-                state.updateBannerStatus = "loading";
+            // delete Banner
+            .addCase(fetchDeleteBanner.pending, (state) => {
+                state.deleteBannerStatus = "loading";
             })
-            .addCase(fetchUpdateBanner.fulfilled, (state, action) => {
-                state.updateBannerStatus = "succeeded";
-                state.updateBanner = action.payload;
+            .addCase(fetchDeleteBanner.fulfilled, (state, action) => {
+                state.deleteBannerStatus = "succeeded";
+                state.deleteBanner = action.payload;
             })
-            .addCase(fetchUpdateBanner.rejected, (state, action) => {
-                state.updateBannerStatus = "failed";
-                state.updateBannerError = action.payload;
+            .addCase(fetchDeleteBanner.rejected, (state, action) => {
+                state.deleteBannerStatus = "failed";
+                state.deleteBannerError = action.payload;
             });
     },
 });
 
+export const { resetDeleteBanner } = bannerSlice.actions;
 export default bannerSlice.reducer;
