@@ -19,11 +19,13 @@ import userRouter from "./routes/userRoutes.js";
 import categoryRouter from "./routes/categoryRoutes.js";
 import productRouter from "./routes/productRoute.js";
 import blogRouter from "./routes/blogRoutes.js";
+import bannerRouter from "./routes/bannerRoutes.js";
 
 app.use("/api/v1/base", baseRouter);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/categories", categoryRouter);
 app.use("/api/v1/products", productRouter);
 app.use("/api/v1/blogs", blogRouter);
+app.use("/api/v1/banners", bannerRouter);
 
 export { app };
