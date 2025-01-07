@@ -15,6 +15,10 @@ const blogSchema = new Schema(
       type: String,
       required: true,
     },
+    detailImage: {
+      type: String,
+      required: true,
+    },
     seoTitle: {
       type: String,
     },

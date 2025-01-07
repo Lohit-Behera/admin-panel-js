@@ -51,6 +51,18 @@ const updateBlogSchema = z.object({
       message: "Only .jpg and .png formats are supported.",
     })
     .optional(),
+  detailImage: z
+    .any()
+    .refine((file) => file instanceof File, {
+      message: "Thumbnail is required.",
+    })
+    .refine((file) => file?.size <= 3 * 1024 * 1024, {
+      message: "Thumbnail size must be less than 3MB.",
+    })
+    .refine((file) => ["image/jpeg", "image/png"].includes(file?.type), {
+      message: "Only .jpg and .png formats are supported.",
+    })
+    .optional(),
   isPublic: z.boolean(),
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
@@ -65,6 +77,7 @@ function UpdateBlog({ params }) {
   const getBlogStatus = useSelector((state) => state.blog.getBlogStatus);
 
   const [editThumbnail, setEditThumbnail] = useState(false);
+  const [editDetailImage, setEditDetailImage] = useState(false);
 
   useEffect(() => {
     dispatch(fetchGetBlog(params?.slug));
@@ -76,6 +89,7 @@ function UpdateBlog({ params }) {
         title: getBlog?.title || "",
         content: getBlog?.content || "",
         thumbnail: undefined,
+        detailImage: undefined,
         isPublic: getBlog?.isPublic || true,
         seoTitle: getBlog?.seoTitle || "",
         seoDescription: getBlog?.seoDescription || "",
@@ -185,6 +199,58 @@ function UpdateBlog({ params }) {
                               onClick={(e) => {
                                 e.preventDefault();
                                 setEditThumbnail(true);
+                              }}
+                            >
+                              <Pencil />
+                            </Button>
+                          </div>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="detailImage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Detail Image</FormLabel>
+                        {editDetailImage ? (
+                          <div className="flex items-center gap-2 w-full h-full justify-between">
+                            <FormControl>
+                              <Input
+                                type="file"
+                                onChange={(e) =>
+                                  field.onChange(e.target.files?.[0] || null)
+                                }
+                                placeholder="Detail Image"
+                              />
+                            </FormControl>
+                            <Button
+                              variant={"outline"}
+                              size="icon"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                field.onChange(undefined);
+                                setEditDetailImage(false);
+                              }}
+                            >
+                              <X />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 w-full h-full justify-between">
+                            <img
+                              src={getBlog?.detailImage}
+                              alt={getBlog?.title}
+                              className="w-40 h-40 rounded-lg object-cover"
+                            />
+                            <Button
+                              variant={"outline"}
+                              size="icon"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setEditDetailImage(true);
                               }}
                             >
                               <Pencil />

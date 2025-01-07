@@ -218,7 +218,7 @@ const updateProduct = asyncHandler(async (req, res) => {
   }
 
   // get thumbnail
-  const thumbnail = req.files.thumbnail[0];
+  const thumbnail = req.files.thumbnail ? req.files.thumbnail[0] : null;
   if (thumbnail) {
     if (
       thumbnail.mimetype !== "image/jpeg" &&
@@ -247,7 +247,7 @@ const updateProduct = asyncHandler(async (req, res) => {
   }
 
   // get big image
-  const bigImage = req.files.bigImage[0];
+  const bigImage = req.files.bigImage ? req.files.bigImage[0] : null;
   if (bigImage) {
     if (
       bigImage.mimetype !== "image/jpeg" &&

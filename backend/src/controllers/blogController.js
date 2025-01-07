@@ -26,7 +26,7 @@ const createBlog = asyncHandler(async (req, res) => {
     value;
 
   // get thumbnail from the request
-  const thumbnail = req.file;
+  const thumbnail = req.files.thumbnail ? req.files.thumbnail[0] : null;
   if (!thumbnail) {
     return res
       .status(400)
@@ -38,12 +38,36 @@ const createBlog = asyncHandler(async (req, res) => {
   ) {
     return res
       .status(400)
-      .json(new ApiResponse(400, null, "Invalid image format"));
+      .json(new ApiResponse(400, null, "Invalid thumbnail format"));
   }
   // upload thumbnail to cloudinary
   const thumbnailUrl = await uploadFile(thumbnail);
   // validate the thumbnail url
   if (!thumbnailUrl) {
+    return res
+      .status(500)
+      .json(new ApiResponse(500, null, "Detail Image upload failed"));
+  }
+
+  // get detailImage from the request
+  const detailImage = req.files.detailImage ? req.files.detailImage[0] : null;
+  if (!detailImage) {
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "Detail Image is required"));
+  }
+  if (
+    detailImage.mimetype !== "image/jpeg" &&
+    detailImage.mimetype !== "image/png"
+  ) {
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "Invalid Detail image format"));
+  }
+  // upload detail Image to cloudinary
+  const detailImageUrl = await uploadFile(detailImage);
+  // validate the detailImage url
+  if (!detailImageUrl) {
     return res
       .status(500)
       .json(new ApiResponse(500, null, "Image upload failed"));
@@ -53,6 +77,7 @@ const createBlog = asyncHandler(async (req, res) => {
     title,
     content,
     thumbnail: thumbnailUrl,
+    detailImage: detailImageUrl,
     isPublic,
     seoTitle,
     seoDescription,
@@ -157,7 +182,7 @@ const updateBlog = asyncHandler(async (req, res) => {
     return res.status(404).json(new ApiResponse(404, null, "Blog not found"));
   }
   // get thumbnail from the request
-  const thumbnail = req.file;
+  const thumbnail = req.files.thumbnail ? req.files.thumbnail[0] : null;
   if (thumbnail) {
     if (
       thumbnail.mimetype !== "image/jpeg" &&
@@ -184,6 +209,34 @@ const updateBlog = asyncHandler(async (req, res) => {
     // update thumbnail
     blog.thumbnail = thumbnailUrl;
   }
+  // get thumbnail from the request
+  const detailImage = req.files.detailImage ? req.files.detailImage[0] : null;
+  if (detailImage) {
+    if (
+      detailImage.mimetype !== "image/jpeg" &&
+      detailImage.mimetype !== "image/png"
+    ) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, null, "Invalid detail image format"));
+    }
+    // upload detailImage to cloudinary
+    const detailImageUrl = await uploadFile(detailImage);
+    // validate the detailImage url
+    if (!detailImageUrl) {
+      return res
+        .status(500)
+        .json(new ApiResponse(500, null, "Detail image upload failed"));
+    }
+    //delete the old thumbnail from cloudinary
+    const oldDetailImage = blog.thumbnail;
+    if (oldDetailImage) {
+      const publicId = oldDetailImage.split('/').pop().split('.')[0];
+    await deleteFile(publicId, res)
+    }
+    // update thumbnail
+    blog.detailImage = detailImageUrl;
+  }
 
   // Update fields if they are provided and different
   const fieldsToUpdate = [
@@ -203,7 +256,7 @@ const updateBlog = asyncHandler(async (req, res) => {
     }
   });
 
-  if (!hasUpdates && !thumbnail) {
+  if (!hasUpdates && !thumbnail, !detailImage) {
     return res
       .status(400)
       .json(new ApiResponse(400, null, "No fields to update"));

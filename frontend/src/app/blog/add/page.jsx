@@ -1,5 +1,5 @@
 "use client";
-
+//TODO add detail image field
 import { useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -46,6 +46,17 @@ const createBlogSchema = z.object({
     .refine((file) => ["image/jpeg", "image/png"].includes(file?.type), {
       message: "Only .jpg and .png formats are supported.",
     }),
+  detailImage: z
+    .any()
+    .refine((file) => file instanceof File, {
+      message: "Thumbnail is required.",
+    })
+    .refine((file) => file?.size <= 3 * 1024 * 1024, {
+      message: "Thumbnail size must be less than 3MB.",
+    })
+    .refine((file) => ["image/jpeg", "image/png"].includes(file?.type), {
+      message: "Only .jpg and .png formats are supported.",
+    }),
   isPublic: z.boolean(),
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
@@ -62,6 +73,7 @@ function CreateBlog() {
       title: "",
       content: "",
       thumbnail: undefined,
+      detailImage: undefined,
       isPublic: true,
       seoTitle: "",
       seoDescription: "",
@@ -125,6 +137,25 @@ function CreateBlog() {
                           field.onChange(e.target.files?.[0] || null)
                         }
                         placeholder="thumbnail"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="detailImage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Detail Image</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="file"
+                        onChange={(e) =>
+                          field.onChange(e.target.files?.[0] || null)
+                        }
+                        placeholder="detailImage"
                       />
                     </FormControl>
                     <FormMessage />

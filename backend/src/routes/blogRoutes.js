@@ -12,13 +12,13 @@ import {
 
 const blogRouter = Router();
 
-blogRouter.post("/create", upload.single("thumbnail"), resizeImage, createBlog);
+blogRouter.post("/create", upload.fields([{ name: "thumbnail" }, { name: "detailImage" }]), resizeImage, createBlog);
 blogRouter.get("/:blogId", getBlog);
 blogRouter.get("/get/all", getAllBlogs);
 blogRouter.get("/get/recent", getRecentBlogs);
 blogRouter.patch(
   "/update/:blogId",
-  upload.single("thumbnail"),
+  upload.fields([{ name: "thumbnail" }, { name: "detailImage" }]),
   resizeImage,
   updateBlog
 );

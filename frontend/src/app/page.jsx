@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { LayoutGrid, NotebookPen, Package2 } from "lucide-react";
+import { Image, LayoutGrid, NotebookPen, Package2 } from "lucide-react";
 import { fetchGetCount } from "@/lib/features/baseSlice";
 import { withAuth } from "@/components/withAuth";
 
@@ -53,6 +53,17 @@ function Home() {
                 <NotebookPen />
                 <span className="text-base md:text-xl font-semibold text-center">
                   {getCount.blogCount}
+                </span>
+              </div>
+            </div>
+            <div className="flex flex-col space-y-4 p-4 rounded-md border min-h-40">
+              <h2 className="text-base md:text-xl font-semibold">
+                Total Banner
+              </h2>
+              <div className="h-full flex justify-between space-x-2 items-end">
+                <Image />
+                <span className="text-base md:text-xl font-semibold text-center">
+                  {getCount.bannerCount}
                 </span>
               </div>
             </div>
