@@ -75,15 +75,15 @@ function Footer() {
       links: [
         {
           name: `My Company,75000 Paris France`,
-          icon: <MapPin className="mr-2" />,
+          icon: <MapPin className="w-6 h-6 mr-2" />,
         },
         {
           name: "Email: sales@yourcompany.com",
-          icon: <Mail className="mr-2" />,
+          icon: <Mail className="w-6 h-6 mr-2" />,
         },
         {
           name: "Phone 1: 0123456789",
-          icon: <Phone className="mr-2" />,
+          icon: <Phone className="w-6 h-6 mr-2" />,
         },
       ],
     },
