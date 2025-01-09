@@ -169,7 +169,7 @@ const getRecentProducts = asyncHandler(async (req, res) => {
   const products = await Product.find()
     .sort({ createdAt: -1 })
     .limit(4)
-    .select("_id name affiliateLink price category image");
+    .select("_id name price thumbnail");
   // validate the products
   if (!products) {
     return res
