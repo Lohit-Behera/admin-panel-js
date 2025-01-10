@@ -19,14 +19,13 @@ function RecentProducts() {
     }
   }, [dispatch]);
   return (
-    <div>
+    <>
       {getRecentProductsStatus === "loading" ? (
         <div>Loading...</div>
       ) : getRecentProductsStatus === "failed" ? (
         <div>Error</div>
       ) : getRecentProductsStatus === "succeeded" ? (
         <div className="w-full md:w-[95%]">
-          <h2 className="text-lg md:text-2xl font-semibold">Recent Products</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             {recentProducts.map((product) => (
               <Product key={product._id} product={product} />
@@ -34,7 +33,7 @@ function RecentProducts() {
           </div>
         </div>
       ) : null}
-    </div>
+    </>
   );
 }
 
