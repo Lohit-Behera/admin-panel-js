@@ -37,7 +37,7 @@ export default function RootLayout({ children }) {
           >
             <div className="w-full min-h-screen flex flex-col justify-center items-center overflow-x-hidden">
               <Header />
-              <main className="w-full flex-1 flex justify-center items-center my-6">
+              <main className="w-[99%] flex-1 flex justify-center items-center my-6 ">
                 {children}
               </main>
               <ScrollToTop />
