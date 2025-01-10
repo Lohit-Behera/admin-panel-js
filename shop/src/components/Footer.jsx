@@ -89,7 +89,7 @@ function Footer() {
     },
   ];
   return (
-    <footer className="w-full flex flex-col space-y-4 p-4 bg-zinc-200 dark:bg-zinc-800">
+    <footer className="w-full flex flex-col space-y-4 p-4 bg-zinc-200 dark:bg-zinc-900">
       <div className="flex flex-wrap md:flex justify-between gap-4 ">
         {data.map((item) => (
           <div key={item.title}>

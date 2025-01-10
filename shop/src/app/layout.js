@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import Header from "@/components/Header";
 import StoreProvider from "./StoreProvider";
 import Footer from "@/components/Footer";
+import ScrollToTop from "@/components/scroll-to-top";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -39,6 +40,7 @@ export default function RootLayout({ children }) {
               <main className="w-full flex-1 flex justify-center items-center my-6">
                 {children}
               </main>
+              <ScrollToTop />
               <Footer />
             </div>
           </ThemeProvider>
