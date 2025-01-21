@@ -81,7 +81,7 @@ function UpdateBlog({ params }) {
 
   useEffect(() => {
     dispatch(fetchGetBlog(params?.slug));
-  }, [params?.slug]);
+  }, [params?.slug, dispatch]);
 
   useEffect(() => {
     if (getBlogStatus === "succeeded") {
@@ -96,7 +96,7 @@ function UpdateBlog({ params }) {
         seoKeywords: getBlog?.seoKeywords || "",
       });
     }
-  }, [getBlogStatus]);
+  }, [getBlogStatus, form, getBlog]);
 
   const form = useForm({
     resolver: zodResolver(updateBlogSchema),

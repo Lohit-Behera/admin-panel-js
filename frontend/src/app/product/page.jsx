@@ -23,10 +23,10 @@ function Product() {
   );
   useEffect(() => {
     dispatch(fetchGetAllProducts());
-  }, []);
+  }, [dispatch]);
   useEffect(() => {
     if (deleteProductStatus === "succeeded") dispatch(fetchGetAllProducts());
-  }, [deleteProductStatus]);
+  }, [deleteProductStatus, dispatch]);
 
   return (
     <>

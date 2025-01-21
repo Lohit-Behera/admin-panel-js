@@ -25,13 +25,13 @@ function Category() {
   );
   useEffect(() => {
     dispatch(fetchGetAllCategories());
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     if (deleteCategoryStatus === "succeeded") {
       dispatch(fetchGetAllCategories());
     }
-  }, [deleteCategoryStatus]);
+  }, [deleteCategoryStatus, dispatch]);
   return (
     <>
       {getAllCategoriesStatus === "loading" ? (

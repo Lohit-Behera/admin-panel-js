@@ -15,13 +15,13 @@ function Banner() {
   );
   useEffect(() => {
     dispatch(fetchGetBanner());
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     if (deleteBannerStatus === "succeeded") {
       dispatch(fetchGetBanner());
     }
-  }, [deleteBannerStatus]);
+  }, [deleteBannerStatus, dispatch]);
   return (
     <>
       {getBannerStatus === "loading" ? (

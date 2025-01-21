@@ -133,6 +133,24 @@ export const fetchDeleteProduct = createAsyncThunk(
   }
 );
 
+export const fetchSearchProduct = createAsyncThunk(
+  "product/searchProduct",
+  async (searchTerm, { rejectWithValue }) => {
+    try {
+      const { data } = await axios.get(
+        `${baseUrl}/api/v1/products?search=${searchTerm}`
+      );
+      return data;
+    } catch (error) {
+      const errorMessage =
+        error.response && error.response.data
+          ? error.response.data.message
+          : error.message;
+      return rejectWithValue(errorMessage);
+    }
+  }
+)
+
 // slice
 const productSlice = createSlice({
   name: "product",
@@ -160,6 +178,10 @@ const productSlice = createSlice({
     deleteProduct: { data: "" },
     deleteProductStatus: "idle",
     deleteProductError: {},
+
+    searchProduct: { data: [] },
+    searchProductStatus: "idle",
+    searchProductError: {},
   },
   reducers: {
     resetDeleteProduct: (state) => {
@@ -247,6 +269,19 @@ const productSlice = createSlice({
       .addCase(fetchDeleteProduct.rejected, (state, action) => {
         state.deleteProductStatus = "failed";
         state.deleteProductError = action.payload || "Failed to delete product";
+      })
+
+      // Search Product
+      .addCase(fetchSearchProduct.pending, (state) => {
+        state.searchProductStatus = "loading";
+      })
+      .addCase(fetchSearchProduct.fulfilled, (state, action) => {
+        state.searchProductStatus = "succeeded";
+        state.searchProduct = action.payload;
+      })
+      .addCase(fetchSearchProduct.rejected, (state, action) => {
+        state.searchProductStatus = "failed";
+        state.searchProductError = action.payload || "Failed to search product";
       });
   },
 });

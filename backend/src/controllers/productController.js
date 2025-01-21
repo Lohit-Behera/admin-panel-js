@@ -353,6 +353,33 @@ const deleteProduct = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "Product deleted successfully"));
 });
 
+
+// search product
+const searchProduct = asyncHandler(async (req, res) => {
+  // get search text from the request
+  const searchText = req.query.search;
+  // validate the search text
+  if (!searchText) {
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "Search text is required"));
+  }
+  // search products
+  const products = await Product.find({
+    name: { $regex: searchText, $options: "i" },
+  });
+  // validate the products
+  if (!products) {
+    return res
+      .status(404)
+      .json(new ApiResponse(404, null, "Products not found"));
+  }
+  // send the response
+  return res
+    .status(200)
+    .json(new ApiResponse(200, products, "Products found successfully"));
+});
+
 export {
   createProduct,
   getProduct,
@@ -360,4 +387,5 @@ export {
   getRecentProducts,
   updateProduct,
   deleteProduct,
+  searchProduct,
 };

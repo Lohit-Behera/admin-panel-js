@@ -25,13 +25,13 @@ function AllBlogs() {
 
   useEffect(() => {
     dispatch(fetchGetAllBlogs());
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     if (deleteBlogStatus === "succeeded") {
       dispatch(fetchGetAllBlogs());
     }
-  }, [deleteBlogStatus]);
+  }, [deleteBlogStatus, dispatch]);
   return (
     <>
       {getAllBlogsStatus === "loading" ? (

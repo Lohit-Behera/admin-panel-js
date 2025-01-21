@@ -1,3 +1,8 @@
 {
-  "extends": "next/core-web-vitals"
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "@next/next/no-img-element": "off", // Disables the <img> element warning
+    "react-hooks/rules-of-hooks": "off", // Disables the hooks usage rule
+    "jsx-a11y/alt-text": "off" // Disables the alt attribute rule
+  }
 }

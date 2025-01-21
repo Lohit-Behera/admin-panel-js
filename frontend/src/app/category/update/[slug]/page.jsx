@@ -59,7 +59,7 @@ function UpdateCategory({ params }) {
 
   useEffect(() => {
     dispatch(fetchGetCategory(params.slug));
-  }, [params.slug]);
+  }, [params.slug, dispatch]);
 
   useEffect(() => {
     if (category) {
@@ -69,7 +69,7 @@ function UpdateCategory({ params }) {
         thumbnail: undefined,
       });
     }
-  }, [category]);
+  }, [category, form]);
 
   const form = useForm({
     resolver: zodResolver(updateCategorySchema),

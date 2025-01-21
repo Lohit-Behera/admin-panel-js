@@ -43,7 +43,7 @@ function LoginPage() {
     if (userInfo) {
       router.push("/");
     }
-  }, [userInfo]);
+  }, [userInfo, router]);
 
   const form = useForm({
     resolver: zodResolver(loginFormSchema),

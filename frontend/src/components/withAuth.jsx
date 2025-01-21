@@ -13,7 +13,7 @@ export function withAuth(Component) {
       if (!userInfo) {
         router.replace("/login");
       }
-    }, [userInfo]);
+    }, [userInfo, router]);
 
     return <Component {...props} />;
   };

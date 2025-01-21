@@ -13,7 +13,7 @@ function Home() {
 
   useEffect(() => {
     dispatch(fetchGetCount());
-  }, []);
+  }, [dispatch]);
   return (
     <>
       {getCountStatus === "loading" ? (

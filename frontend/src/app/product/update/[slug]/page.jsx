@@ -136,7 +136,7 @@ function UpdateProduct({ params }) {
   useEffect(() => {
     dispatch(fetchGetProduct(params.slug));
     dispatch(fetchGetAllCategoriesNames());
-  }, [params.slug]);
+  }, [params.slug, dispatch]);
 
   useEffect(() => {
     if (getProduct) {

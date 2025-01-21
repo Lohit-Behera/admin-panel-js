@@ -7,7 +7,8 @@ import {
   getAllProducts,
   getRecentProducts,
   updateProduct,
-  deleteProduct
+  deleteProduct,
+  searchProduct
 } from "../controllers/productController.js";
 
 const productRouter = Router();
@@ -33,5 +34,8 @@ productRouter.patch(
 );
 // delete product
 productRouter.delete("/delete/:productId", deleteProduct);
+
+// search product
+productRouter.get("/", searchProduct);
 
 export default productRouter;

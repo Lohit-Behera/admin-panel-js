@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter, usePathname } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "@/lib/features/userSlice";
-import { LogIn, LogOut } from "lucide-react";
+import { LogIn, LogOut, Search } from "lucide-react";
 import { SidebarTrigger } from "./ui/sidebar";
 import { Skeleton } from "./ui/skeleton";
 const ModeToggle = dynamic(
@@ -15,6 +15,18 @@ const ModeToggle = dynamic(
     loading: () => <Skeleton className="w-10 h-10" />,
   }
 );
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Input } from "./ui/input";
 
 function Header() {
   const dispatch = useDispatch();
@@ -23,6 +35,7 @@ function Header() {
   const userInfo = useSelector((state) => state.user.userInfo);
 
   const [isClient, setIsClient] = useState(false);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     setIsClient(true);
@@ -37,9 +50,37 @@ function Header() {
         >
           {userInfo && <SidebarTrigger />}
           <div className="flex justify-end space-x-2">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Search />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Search Product</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    <Input
+                      placeholder="Search..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                    />
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => router.push(`/product/${search}`)}
+                  >
+                    Search
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
             {userInfo ? (
               <Button
-                variant={"outline"}
+                variant={"destructive"}
                 size="sm"
                 onClick={() => dispatch(logout())}
               >

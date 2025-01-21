@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown, LockKeyhole, Pencil, Trash2, Users2 } from "lucide-react";
+import { LockKeyhole, Pencil, Trash2, Users2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { fetchDeleteBlog, resetDeleteBlog } from "@/lib/features/blogSlice";
 import { toast } from "sonner";
