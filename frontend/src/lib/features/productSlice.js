@@ -88,20 +88,8 @@ export const fetchUpdateProduct = createAsyncThunk(
         },
       };
       const { data } = await axios.patch(
-        `${baseUrl}/api/v1/products/update/${product._id}`,
-        {
-          name: product.name,
-          productDescription: product.productDescription,
-          productDetail: product.productDetail,
-          affiliateLink: product.affiliateLink,
-          category: product.category,
-          quantity: product.quantity,
-          amount: product.amount,
-          discount: product.discount,
-          sellingPrice: product.sellingPrice,
-          isPublic: product.isPublic,
-          thumbnail: product.thumbnail,
-        },
+        `${baseUrl}/api/v1/products/update/${product.productId}`,
+        product.product,
         config
       );
       return data;

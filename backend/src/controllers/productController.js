@@ -13,9 +13,8 @@ const createProduct = asyncHandler(async (req, res) => {
     affiliateLink: Joi.string().uri().required(),
     category: Joi.string().required(),
     quantity: Joi.number().integer().positive().required(),
-    amount: Joi.number().positive().required(),
-    discount: Joi.number().required(),
-    sellingPrice: Joi.number().positive().required(),
+    totalPrice: Joi.number().positive().required(),
+    discount: Joi.number().required().min(1).max(99),
     isPublic: Joi.boolean().required(),
   });
 
@@ -33,54 +32,34 @@ const createProduct = asyncHandler(async (req, res) => {
     productDescription,
     productDetail,
     affiliateLink,
-    amount,
+    totalPrice,
     discount,
-    sellingPrice,
     category,
     quantity,
     isPublic,
   } = value;
 
-  // get thumbnail from the request
-  const thumbnail = req.files.thumbnail[0];
+  // get images from the request
+  const images = req.files.images;
   
   // validate the image
-  if (!thumbnail) {
+  if (!images || images.length === 0) {
     return res
       .status(400)
       .json(new ApiResponse(400, null, "Thumbnail is required"));
   }
   
-  if (
-    thumbnail.mimetype !== "image/jpeg" &&
-    thumbnail.mimetype !== "image/png" 
-  ) {
-    return res
-      .status(400)
-      .json(new ApiResponse(400, null, "Thumbnail invalid image format"));
-  }
-  // get big image from the request
-  const bigImage = req.files.bigImage[0];
-  // validate the image
-  if (!bigImage) {
-    return res
-      .status(400)
-      .json(new ApiResponse(400, null, "Big image is required"));
-  }
-  if (bigImage.mimetype !== "image/jpeg" && bigImage.mimetype !== "image/png") {
-    return res
-      .status(400)
-      .json(new ApiResponse(400, null, "Big image invalid image format"));
-  }
-  // upload image to cloudinary
-  const thumbnailUrl = await uploadFile(thumbnail);
-  const bigImageUrl = await uploadFile(bigImage);
+  // upload images to cloudinary
+  const imagesUrls = await Promise.all(images.map(file => uploadFile(file)));
   // validate the image url
-  if (!thumbnailUrl || !bigImageUrl) {
+  if (!imagesUrls || imagesUrls.length === 0) {
     return res
       .status(500)
-      .json(new ApiResponse(500, null, "Image upload failed"));
+      .json(new ApiResponse(500, null, "Images upload failed"));
   }
+
+  // calculate discounted price
+  const sellingPrice = totalPrice - (totalPrice * discount) / 100;
 
   // create the product
   const product = await Product.create({
@@ -88,14 +67,13 @@ const createProduct = asyncHandler(async (req, res) => {
     productDescription,
     productDetail,
     affiliateLink,
-    amount,
+    totalPrice,
     discount,
     sellingPrice,
     category,
     quantity,
-    thumbnail: thumbnailUrl,
+    images: imagesUrls,
     isPublic,
-    bigImage: bigImageUrl,
   });
   // validate the product creation
   const createdProduct = await Product.findById(product._id);
@@ -194,9 +172,8 @@ const updateProduct = asyncHandler(async (req, res) => {
     productDetail: Joi.string().optional(),
     category: Joi.string().optional(),
     affiliateLink: Joi.string().uri().optional(),
-    amount: Joi.number().positive().optional(),
+    totalPrice: Joi.number().positive().optional(),
     discount: Joi.number().positive().optional(),
-    sellingPrice: Joi.number().positive().optional(),
     quantity: Joi.number().positive().optional(),
     isPublic: Joi.boolean().optional(),
   });
@@ -217,64 +194,6 @@ const updateProduct = asyncHandler(async (req, res) => {
       .json(new ApiResponse(404, null, "Product not found"));
   }
 
-  // get thumbnail
-  const thumbnail = req.files.thumbnail ? req.files.thumbnail[0] : null;
-  if (thumbnail) {
-    if (
-      thumbnail.mimetype !== "image/jpeg" &&
-      thumbnail.mimetype !== "image/png"
-    ) {
-      return res
-        .status(400)
-        .json(new ApiResponse(400, null, "Invalid image format"));
-    }
-    // upload image to cloudinary
-    const thumbnailUrl = await uploadFile(thumbnail);
-    // validate the image url
-    if (!thumbnailUrl) {
-      return res
-        .status(500)
-        .json(new ApiResponse(500, null, "Thumbnail upload failed"));
-    }
-    // delete the old thumbnail from cloudinary
-    const oldThumbnail = product.thumbnail;
-    if (oldThumbnail) {
-      const publicId = oldThumbnail.split('/').pop().split('.')[0];
-      await deleteFile(publicId, res)
-    }
-    // update the category
-    product.thumbnail = thumbnailUrl;
-  }
-
-  // get big image
-  const bigImage = req.files.bigImage ? req.files.bigImage[0] : null;
-  if (bigImage) {
-    if (
-      bigImage.mimetype !== "image/jpeg" &&
-      bigImage.mimetype !== "image/png"
-    ) {
-      return res
-        .status(400)
-        .json(new ApiResponse(400, null, "Invalid image format"));
-    }
-    // upload image to cloudinary
-    const bigImageUrl = await uploadFile(bigImage);
-    // validate the image url
-    if (!bigImageUrl) {
-      return res
-        .status(500)
-        .json(new ApiResponse(500, null, "Big image upload failed"));
-    }
-    // delete the old big image from cloudinary
-    const oldBigImage = product.bigImage;
-    if (oldBigImage) {    
-      const publicId = oldBigImage.split('/').pop().split('.')[0];
-      await deleteFile(publicId, res)
-    }
-    // update the category
-    product.bigImage = bigImageUrl;
-  }
-
   // Update fields if they are provided and different
   const fieldsToUpdate = [
     "name",
@@ -282,23 +201,45 @@ const updateProduct = asyncHandler(async (req, res) => {
     "productDetail",
     "category",
     "affiliateLink",
-    "amount",
+    "totalPrice",
     "discount",
-    "sellingPrice",
     "quantity",
     "isPublic",
   ];
 
+  // get images from the request
+  const images = req.files.images;
+  
+  // validate the image
+  if (images) {
+    // upload images to cloudinary
+    const imagesUrls = await Promise.all(images.map(file => uploadFile(file)));
+    // validate the image url
+    if (!imagesUrls || imagesUrls.length === 0) {
+      return res
+        .status(500)
+        .json(new ApiResponse(500, null, "Images upload failed"));
+    }
+    product.images = imagesUrls
+  }
+  
+
   let hasUpdates = false;
 
   fieldsToUpdate.forEach((field) => {
-    if (value[field] !== undefined && value[field] !== product[field]) {
+    if (value[field] !== undefined && value[field] !== product[field] && field !== "discount") {
       product[field] = value[field];
+      hasUpdates = true;
+    }
+    if (field === "discount" && product.discount !== value.discount) {
+      product.discount = value.discount
+      const sellingPrice = product.totalPrice - (product.totalPrice * product.discount) / 100;
+      product.sellingPrice = sellingPrice
       hasUpdates = true;
     }
   });
 
-  if (!hasUpdates && !thumbnail && !bigImage) {
+  if (!hasUpdates && !images) {
     return res
       .status(400)
       .json(new ApiResponse(400, null, "No fields to update"));
@@ -311,7 +252,7 @@ const updateProduct = asyncHandler(async (req, res) => {
       .status(500)
       .json(new ApiResponse(500, null, "Product update failed"));
   }
-
+ 
   return res
     .status(200)
     .json(
@@ -330,15 +271,12 @@ const deleteProduct = asyncHandler(async (req, res) => {
       .status(404)
       .json(new ApiResponse(404, null, "Product not found"));
   }
-  // delete thumbnail from cloudinary
-  if (product.thumbnail) {
-      const publicId = product.thumbnail.split('/').pop().split('.')[0];
+  // delete images from cloudinary
+  if (product.images) {
+    product.images.forEach(async (image) => {
+      const publicId = image.split('/').pop().split('.')[0];
       await deleteFile(publicId, res)
-    }
-  // delete big image from cloudinary
-  if (product.bigImage) {
-      const publicId = product.bigImage.split('/').pop().split('.')[0];
-      await deleteFile(publicId, res)
+    })
   }
   // delete the product
   const deletedProduct = await Product.findByIdAndDelete(productId);

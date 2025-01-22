@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -52,38 +53,34 @@ const updateProductSchema = z.object({
     .min(10, { message: "Description must be at least 10 characters" })
     .max(2000, { message: "Description must be at most 2000 characters" })
     .optional(),
-  thumbnail: z
-    .any()
-    .refine((file) => file instanceof File, {
-      message: "Thumbnail is required.",
-    })
-    .refine((file) => ["image/jpeg", "image/png"].includes(file?.type), {
-      message: "Only .jpg and .png formats are supported.",
-    })
+  images: z
+    .array(
+      z
+        .any()
+        .refine((file) => file instanceof File, {
+          message: "Each thumbnail must be a file.",
+        })
+        .refine((file) => file?.size <= 3 * 1024 * 1024, {
+          message: "Each thumbnail size must be less than 3MB.",
+        })
+        .refine((file) => ["image/jpeg", "image/png"].includes(file?.type), {
+          message: "Only .jpg and .png formats are supported for thumbnails.",
+        })
+    )
+    .min(1, { message: "At least one thumbnail is required." })
+    .max(5, { message: "You can upload up to 5 thumbnails." })
     .optional(),
-  bigImage: z
-    .any()
-    .refine((file) => file instanceof File, {
-      message: "Image is required.",
-    })
-    .refine((file) => ["image/jpeg", "image/png"].includes(file?.type), {
-      message: "Only .jpg and .png formats are supported.",
-    })
-    .optional(),
-  amount: z
+
+  totalPrice: z
     .number()
-    .positive({ message: "Amount must be a positive number" })
-    .min(1, { message: "Amount must be at least 1" })
+    .positive({ message: "Total price must be a positive number" })
+    .min(1, { message: "Total price must be at least 1" })
     .optional(),
   discount: z
     .number()
     .positive({ message: "Discount must be a positive number" })
     .min(1, { message: "Discount must be at least 1" })
-    .optional(),
-  sellingPrice: z
-    .number()
-    .positive({ message: "Selling Price must be a positive number" })
-    .min(1, { message: "Selling Price must be at least 1" })
+    .max(99, { message: "Discount must be at most 99" })
     .optional(),
   category: z
     .string({
@@ -101,7 +98,6 @@ function UpdateProduct({ params }) {
   const dispatch = useDispatch();
   const router = useRouter();
   const [editThumbnail, setEditThumbnail] = useState(false);
-  const [editBigImage, setEditBigImage] = useState(false);
 
   const getProduct = useSelector((state) => state.product.getProduct.data);
   const getProductStatus = useSelector(
@@ -123,10 +119,9 @@ function UpdateProduct({ params }) {
       affiliateLink: getProduct?.affiliateLink || "",
       productDescription: getProduct?.productDescription || "",
       productDetail: getProduct?.productDetail || "",
-      thumbnail: undefined,
-      amount: getProduct?.amount || undefined,
+      images: undefined,
+      totalPrice: getProduct?.totalPrice || undefined,
       discount: getProduct?.discount || undefined,
-      sellingPrice: getProduct?.sellingPrice || undefined,
       category: getProduct?.category || "",
       quantity: getProduct?.quantity || undefined,
       isPublic: getProduct?.isPublic || false,
@@ -145,10 +140,9 @@ function UpdateProduct({ params }) {
         affiliateLink: getProduct.affiliateLink || "",
         productDescription: getProduct.productDescription || "",
         productDetail: getProduct.productDetail || "",
-        thumbnail: undefined,
-        amount: getProduct.amount || undefined,
+        images: undefined,
+        totalPrice: getProduct.totalPrice || undefined,
         discount: getProduct.discount || undefined,
-        sellingPrice: getProduct.sellingPrice || undefined,
         category: getProduct.category || "",
         quantity: getProduct.quantity || undefined,
         isPublic: getProduct.isPublic || false,
@@ -157,21 +151,21 @@ function UpdateProduct({ params }) {
   }, [getProduct, form]);
 
   function onSubmit(values) {
+    // Create a new FormData instance
+    const formData = new FormData();
+    // Append all values to the FormData object
+    Object.entries(values).forEach(([key, value]) => {
+      if (key === "images" && Array.isArray(value)) {
+        // Ensure 'images' is an array before iterating
+        value.forEach((file) => formData.append("images", file));
+      } else if (value !== undefined && value !== null) {
+        // Append other values if they are not undefined or null
+        formData.append(key, value);
+      }
+    });
+
     const updateProductPromise = dispatch(
-      fetchUpdateProduct({
-        _id: getProduct?._id || "",
-        name: values.name,
-        affiliateLink: values.affiliateLink,
-        productDescription: values.productDescription,
-        productDetail: values.productDetail,
-        thumbnail: values.thumbnail,
-        amount: values.amount,
-        discount: values.discount,
-        sellingPrice: values.sellingPrice,
-        category: values.category,
-        quantity: values.quantity,
-        isPublic: values.isPublic,
-      })
+      fetchUpdateProduct({ productId: getProduct._id, product: formData })
     ).unwrap();
 
     toast.promise(updateProductPromise, {
@@ -183,12 +177,13 @@ function UpdateProduct({ params }) {
         return (
           error ||
           error.message ||
-          error.data.message ||
+          error.data?.message ||
           "Error updating product. Please try again later."
         );
       },
     });
   }
+
   return (
     <>
       {getProductStatus === "loading" ||
@@ -222,7 +217,7 @@ function UpdateProduct({ params }) {
                     </FormItem>
                   )}
                 />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="quantity"
@@ -250,10 +245,42 @@ function UpdateProduct({ params }) {
                   />
                   <FormField
                     control={form.control}
-                    name="amount"
+                    name="category"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Amount</FormLabel>
+                        <FormLabel>Category</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a Category" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {getAllCategoriesNames.map((category) => (
+                              <SelectItem
+                                key={category._id}
+                                value={category.name}
+                              >
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="totalPrice"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Total Price</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -270,34 +297,13 @@ function UpdateProduct({ params }) {
                           />
                         </FormControl>
                         <FormMessage />
+                        <FormDescription>
+                          Full price of the product.
+                        </FormDescription>
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="sellingPrice"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Selling Price</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            placeholder="Selling Price"
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(
-                                e.target.value
-                                  ? Number(e.target.value)
-                                  : undefined
-                              )
-                            }
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+
                   <FormField
                     control={form.control}
                     name="discount"
@@ -320,6 +326,9 @@ function UpdateProduct({ params }) {
                           />
                         </FormControl>
                         <FormMessage />
+                        <FormDescription>
+                          Discount in % must be between 1 and 99.
+                        </FormDescription>
                       </FormItem>
                     )}
                   />
@@ -340,40 +349,10 @@ function UpdateProduct({ params }) {
                 />
                 <FormField
                   control={form.control}
-                  name="category"
+                  name="images"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Category</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a Category" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {getAllCategoriesNames.map((category) => (
-                            <SelectItem
-                              key={category._id}
-                              value={category.name}
-                            >
-                              {category.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="thumbnail"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Thumbnail</FormLabel>
+                      <FormLabel>images</FormLabel>
                       {editThumbnail ? (
                         <>
                           <FormControl>
@@ -383,7 +362,7 @@ function UpdateProduct({ params }) {
                                 onChange={(e) =>
                                   field.onChange(e.target.files?.[0] || null)
                                 }
-                                placeholder="Thumbnail"
+                                placeholder="Images"
                               />
                               <Button
                                 variant="outline"
@@ -401,70 +380,20 @@ function UpdateProduct({ params }) {
                         </>
                       ) : (
                         <div className="flex items-center gap-2">
-                          <img
-                            src={getProduct.thumbnail}
-                            alt=""
-                            className="h-20 w-20 rounded-md object-cover"
-                          />
+                          {getProduct.images.map((image) => (
+                            <img
+                              key={image}
+                              src={image}
+                              alt=""
+                              className="h-32 w-32 rounded-md object-cover"
+                            />
+                          ))}
                           <Button
                             variant="outline"
                             size="icon"
                             onClick={(e) => {
                               e.preventDefault();
                               setEditThumbnail(true);
-                            }}
-                          >
-                            <Pencil />
-                          </Button>
-                        </div>
-                      )}
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="bigImage"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Big Image</FormLabel>
-                      {editBigImage ? (
-                        <>
-                          <FormControl>
-                            <div className="flex items-center gap-2">
-                              <Input
-                                type="file"
-                                onChange={(e) =>
-                                  field.onChange(e.target.files?.[0] || null)
-                                }
-                                placeholder="Big Image"
-                              />
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  setEditBigImage(false);
-                                }}
-                              >
-                                <X />
-                              </Button>
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <img
-                            src={getProduct.bigImage}
-                            alt=""
-                            className="h-40 w-40 rounded-md object-cover"
-                          />
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setEditBigImage(true);
                             }}
                           >
                             <Pencil />

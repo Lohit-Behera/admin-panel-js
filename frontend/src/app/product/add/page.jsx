@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -45,40 +46,32 @@ const createProductSchema = z.object({
     .string()
     .min(10, { message: "Description must be at least 10 characters" })
     .max(2000, { message: "Description must be at most 2000 characters" }),
-  thumbnail: z
-    .any()
-    .refine((file) => file instanceof File, {
-      message: "Thumbnail is required.",
-    })
-    .refine((file) => file?.size <= 3 * 1024 * 1024, {
-      message: "Thumbnail size must be less than 3MB.",
-    })
-    .refine((file) => ["image/jpeg", "image/png"].includes(file?.type), {
-      message: "Only .jpg and .png formats are supported.",
-    }),
-  bigImage: z
-    .any()
-    .refine((file) => file instanceof File, {
-      message: "Thumbnail is required.",
-    })
-    .refine((file) => file?.size <= 3 * 1024 * 1024, {
-      message: "Thumbnail size must be less than 3MB.",
-    })
-    .refine((file) => ["image/jpeg", "image/png"].includes(file?.type), {
-      message: "Only .jpg and .png formats are supported.",
-    }),
-  amount: z
+  images: z
+    .array(
+      z
+        .any()
+        .refine((file) => file instanceof File, {
+          message: "Each thumbnail must be a file.",
+        })
+        .refine((file) => file?.size <= 3 * 1024 * 1024, {
+          message: "Each thumbnail size must be less than 3MB.",
+        })
+        .refine((file) => ["image/jpeg", "image/png"].includes(file?.type), {
+          message: "Only .jpg and .png formats are supported for thumbnails.",
+        })
+    )
+    .min(1, { message: "At least one thumbnail is required." })
+    .max(5, { message: "You can upload up to 5 thumbnails." }),
+
+  totalPrice: z
     .number()
-    .positive({ message: "Amount must be a positive number" })
-    .min(1, { message: "Amount must be at least 1" }),
+    .positive({ message: "Total price must be a positive number" })
+    .min(1, { message: "Total price must be at least 1" }),
   discount: z
     .number()
     .positive({ message: "Discount must be a positive number" })
-    .min(1, { message: "Discount must be at least 1" }),
-  sellingPrice: z
-    .number()
-    .positive({ message: "Selling Price must be a positive number" })
-    .min(1, { message: "Selling Price must be at least 1" }),
+    .min(1, { message: "Discount must be at least 1" })
+    .max(99, { message: "Discount must be at most 99" }),
   category: z.string({
     required_error: "Please select a category.",
   }),
@@ -109,18 +102,34 @@ function AddProduct() {
       productDescription: "",
       productDetail: "",
       affiliateLink: "",
-      amount: undefined,
+      totalPrice: undefined,
       discount: undefined,
-      sellingPrice: undefined,
       category: "",
       quantity: undefined,
-      thumbnail: undefined,
+      images: undefined,
       isPublic: true,
     },
   });
 
   function onSubmit(values) {
-    const createProductPromise = dispatch(fetchCreateProduct(values)).unwrap();
+    // Create a new FormData instance
+    const formData = new FormData();
+
+    // Append all values to the FormData object
+    Object.entries(values).forEach(([key, value]) => {
+      if (key === "images") {
+        value.forEach((file) => formData.append("images", file));
+      } else {
+        formData.append(key, value);
+      }
+    });
+
+    // Dispatch the action with FormData
+    const createProductPromise = dispatch(
+      fetchCreateProduct(formData)
+    ).unwrap();
+
+    // Handle toast notifications
     toast.promise(createProductPromise, {
       loading: "Creating product...",
       success: (data) => {
@@ -136,6 +145,7 @@ function AddProduct() {
       },
     });
   }
+
   return (
     <>
       {getAllCategoriesNamesStatus === "loading" ? (
@@ -166,7 +176,7 @@ function AddProduct() {
                     </FormItem>
                   )}
                 />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="quantity"
@@ -194,10 +204,42 @@ function AddProduct() {
                   />
                   <FormField
                     control={form.control}
-                    name="amount"
+                    name="category"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Amount</FormLabel>
+                        <FormLabel>Category</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a Category" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {getAllCategoriesNames.map((category) => (
+                              <SelectItem
+                                key={category._id}
+                                value={category.name}
+                              >
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="totalPrice"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Total Price</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -214,34 +256,13 @@ function AddProduct() {
                           />
                         </FormControl>
                         <FormMessage />
+                        <FormDescription>
+                          Full price of the product.
+                        </FormDescription>
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="sellingPrice"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Selling Price</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            placeholder="Selling Price"
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(
-                                e.target.value
-                                  ? Number(e.target.value)
-                                  : undefined
-                              )
-                            }
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+
                   <FormField
                     control={form.control}
                     name="discount"
@@ -264,6 +285,9 @@ function AddProduct() {
                           />
                         </FormControl>
                         <FormMessage />
+                        <FormDescription>
+                          Discount in % must be between 1 and 99.
+                        </FormDescription>
                       </FormItem>
                     )}
                   />
@@ -284,66 +308,19 @@ function AddProduct() {
                 />
                 <FormField
                   control={form.control}
-                  name="category"
+                  name="images"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Category</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a Category" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {getAllCategoriesNames.map((category) => (
-                            <SelectItem
-                              key={category._id}
-                              value={category.name}
-                            >
-                              {category.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="thumbnail"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Thumbnail</FormLabel>
+                      <FormLabel>Images</FormLabel>
                       <FormControl>
                         <Input
                           type="file"
+                          multiple
+                          name="images"
                           onChange={(e) =>
-                            field.onChange(e.target.files?.[0] || null)
+                            field.onChange(Array.from(e.target.files || []))
                           }
-                          placeholder="Thumbnail"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="bigImage"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Big Image</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="file"
-                          onChange={(e) =>
-                            field.onChange(e.target.files?.[0] || null)
-                          }
-                          placeholder="Big Image"
+                          placeholder="Images"
                         />
                       </FormControl>
                       <FormMessage />

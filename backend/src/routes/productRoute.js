@@ -15,7 +15,7 @@ const productRouter = Router();
 // create product
 productRouter.post(
   "/create",
-  upload.fields([{ name: "thumbnail" }, { name: "bigImage" }]),
+  upload.fields([{ name: "images", maxCount: 5 }]),
   resizeImage,
   createProduct
 );
@@ -28,7 +28,7 @@ productRouter.get("/get/recent", getRecentProducts);
 // update product
 productRouter.patch(
   "/update/:productId",
-  upload.fields([{ name: "thumbnail" }, { name: "bigImage" }]),
+  upload.fields([{ name: "images", maxCount: 5 }]),
   resizeImage,
   updateProduct
 );

@@ -22,18 +22,15 @@ const productSchema = new Schema(
       type: String,
       required: true,
     },
-    thumbnail: {
-      type: String,
+    images: {
+      type: [String],
       required: true,
-    },
-    bigImage: {
-      type: String,
     },
     quantity: {
       type: Number,
       required: true,
     },
-    amount: {
+    totalPrice: {
       type: Number,
       required: true,
     },
