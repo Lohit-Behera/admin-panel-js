@@ -363,13 +363,13 @@ function UpdateProduct({ params }) {
                   />
                 </div>
                 <div className="grid gap-4">
-                  <Label htmlFor="sellingPrice">Total Price</Label>
+                  <Label htmlFor="sellingPrice">Selling Price</Label>
                   <Input
                     id="sellingPrice"
                     disable
                     type="number"
                     className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    placeholder="Total Price"
+                    placeholder="Selling Price"
                     value={sellingPrice}
                   />
                   <p className="text-muted-foreground text-sm ">
