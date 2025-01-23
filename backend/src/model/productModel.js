@@ -26,11 +26,11 @@ const productSchema = new Schema(
       type: [String],
       required: true,
     },
-    quantity: {
+    size: {
       type: Number,
       required: true,
     },
-    totalPrice: {
+    originalPrice: {
       type: Number,
       required: true,
     },
@@ -38,7 +38,7 @@ const productSchema = new Schema(
       type: Number,
       required: true,
     },
-    sellingPrice: {
+    totalPrice: {
       type: Number,
       required: true,
     },

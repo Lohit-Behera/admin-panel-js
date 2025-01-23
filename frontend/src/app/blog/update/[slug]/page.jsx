@@ -83,6 +83,18 @@ function UpdateBlog({ params }) {
     dispatch(fetchGetBlog(params?.slug));
   }, [params?.slug, dispatch]);
 
+  const form = useForm({
+    resolver: zodResolver(updateBlogSchema),
+    defaultValues: {
+      title: getBlog?.title,
+      content: getBlog?.content || "",
+      thumbnail: undefined,
+      isPublic: getBlog?.isPublic,
+      seoTitle: getBlog?.seoTitle,
+      seoDescription: getBlog?.seoDescription,
+      seoKeywords: getBlog?.seoKeywords,
+    },
+  });
   useEffect(() => {
     if (getBlogStatus === "succeeded") {
       form.reset({
@@ -97,20 +109,6 @@ function UpdateBlog({ params }) {
       });
     }
   }, [getBlogStatus, form, getBlog]);
-
-  const form = useForm({
-    resolver: zodResolver(updateBlogSchema),
-    defaultValues: {
-      title: getBlog?.title,
-      content: getBlog?.content || "",
-      thumbnail: undefined,
-      isPublic: getBlog?.isPublic,
-      seoTitle: getBlog?.seoTitle,
-      seoDescription: getBlog?.seoDescription,
-      seoKeywords: getBlog?.seoKeywords,
-    },
-  });
-
   const onSubmit = async (values) => {
     const updateBlogPromise = dispatch(
       fetchUpdateBlog({ _id: getBlog?._id, ...values })

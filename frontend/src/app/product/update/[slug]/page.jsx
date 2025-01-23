@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchGetProduct,
@@ -36,6 +35,7 @@ import { fetchGetAllCategoriesNames } from "@/lib/features/categorySlice";
 import { toast } from "sonner";
 import { Pencil, X } from "lucide-react";
 import { withAuth } from "@/components/withAuth";
+import { Label } from "@/components/ui/label";
 
 const updateProductSchema = z.object({
   name: z
@@ -56,38 +56,43 @@ const updateProductSchema = z.object({
   images: z
     .array(
       z
-        .any()
-        .refine((file) => file instanceof File, {
-          message: "Each thumbnail must be a file.",
-        })
-        .refine((file) => file?.size <= 3 * 1024 * 1024, {
-          message: "Each thumbnail size must be less than 3MB.",
-        })
-        .refine((file) => ["image/jpeg", "image/png"].includes(file?.type), {
-          message: "Only .jpg and .png formats are supported for thumbnails.",
-        })
+        .custom()
+        .refine((file) => file instanceof File, "Each file must be valid.")
+        .refine(
+          (file) => file.size <= 3 * 1024 * 1024,
+          (file) => ({
+            message: `File ${file?.name || "uploaded"} exceeds 3MB limit.`,
+          })
+        )
+        .refine(
+          (file) => ["image/jpeg", "image/png"].includes(file.type),
+          (file) => ({
+            message: `File ${
+              file?.name || "uploaded"
+            } must be a .jpg or .png file.`,
+          })
+        )
     )
     .min(1, { message: "At least one thumbnail is required." })
     .max(5, { message: "You can upload up to 5 thumbnails." })
     .optional(),
-
-  totalPrice: z
+  originalPrice: z
     .number()
-    .positive({ message: "Total price must be a positive number" })
-    .min(1, { message: "Total price must be at least 1" })
+    .positive({ message: "Selling price must be a positive number" })
+    .min(1, { message: "Selling price must be at least 1" })
     .optional(),
   discount: z
     .number()
     .positive({ message: "Discount must be a positive number" })
-    .min(1, { message: "Discount must be at least 1" })
-    .max(99, { message: "Discount must be at most 99" })
+    .min(0, { message: "Discount must be at least 0" })
+    .max(100, { message: "Discount must be at most 100" })
     .optional(),
   category: z
     .string({
       required_error: "Please select a category.",
     })
     .optional(),
-  quantity: z
+  size: z
     .number()
     .positive({ message: "Price must be a positive number" })
     .optional(),
@@ -96,8 +101,9 @@ const updateProductSchema = z.object({
 
 function UpdateProduct({ params }) {
   const dispatch = useDispatch();
-  const router = useRouter();
   const [editThumbnail, setEditThumbnail] = useState(false);
+  const [totalPrice, setTotalPrice] = useState(undefined);
+  const [loading, setLoading] = useState(true);
 
   const getProduct = useSelector((state) => state.product.getProduct.data);
   const getProductStatus = useSelector(
@@ -120,10 +126,10 @@ function UpdateProduct({ params }) {
       productDescription: getProduct?.productDescription || "",
       productDetail: getProduct?.productDetail || "",
       images: undefined,
-      totalPrice: getProduct?.totalPrice || undefined,
+      originalPrice: getProduct?.originalPrice || undefined,
       discount: getProduct?.discount || undefined,
       category: getProduct?.category || "",
-      quantity: getProduct?.quantity || undefined,
+      size: getProduct?.size || undefined,
       isPublic: getProduct?.isPublic || false,
     },
   });
@@ -134,32 +140,32 @@ function UpdateProduct({ params }) {
   }, [params.slug, dispatch]);
 
   useEffect(() => {
-    if (getProduct) {
+    if (getProduct && getProductStatus === "succeeded") {
       form.reset({
         name: getProduct.name || "",
         affiliateLink: getProduct.affiliateLink || "",
         productDescription: getProduct.productDescription || "",
         productDetail: getProduct.productDetail || "",
         images: undefined,
-        totalPrice: getProduct.totalPrice || undefined,
+        originalPrice: getProduct.originalPrice || undefined,
         discount: getProduct.discount || undefined,
         category: getProduct.category || "",
-        quantity: getProduct.quantity || undefined,
+        size: getProduct.size || undefined,
         isPublic: getProduct.isPublic || false,
       });
+      setTotalPrice(getProduct.totalPrice);
+      setLoading(false);
     }
-  }, [getProduct, form]);
+  }, [getProduct, form, getProductStatus]);
 
   function onSubmit(values) {
     // Create a new FormData instance
     const formData = new FormData();
-    // Append all values to the FormData object
+    formData.append("totalPrice", totalPrice);
     Object.entries(values).forEach(([key, value]) => {
       if (key === "images" && Array.isArray(value)) {
-        // Ensure 'images' is an array before iterating
         value.forEach((file) => formData.append("images", file));
       } else if (value !== undefined && value !== null) {
-        // Append other values if they are not undefined or null
         formData.append(key, value);
       }
     });
@@ -171,6 +177,8 @@ function UpdateProduct({ params }) {
     toast.promise(updateProductPromise, {
       loading: "Updating product...",
       success: (data) => {
+        dispatch(fetchGetProduct(params.slug));
+        setEditThumbnail(false);
         return data.message || "Product updated successfully";
       },
       error: (error) => {
@@ -187,7 +195,8 @@ function UpdateProduct({ params }) {
   return (
     <>
       {getProductStatus === "loading" ||
-      getAllCategoriesNamesStatus === "loading" ? (
+      getAllCategoriesNamesStatus === "loading" ||
+      loading ? (
         <p>Loading...</p>
       ) : getProductStatus === "failed" ||
         getAllCategoriesNamesStatus === "failed" ? (
@@ -220,15 +229,15 @@ function UpdateProduct({ params }) {
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="quantity"
+                    name="size"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Quantity</FormLabel>
+                        <FormLabel>Size</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
                             className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            placeholder="Quantity"
+                            placeholder="Size"
                             {...field}
                             onChange={(e) =>
                               field.onChange(
@@ -277,23 +286,33 @@ function UpdateProduct({ params }) {
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="totalPrice"
+                    name="originalPrice"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Total Price</FormLabel>
+                        <FormLabel>Original Price</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
                             className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            placeholder="Amount"
+                            placeholder="Original Price"
                             {...field}
-                            onChange={(e) =>
-                              field.onChange(
-                                e.target.value
-                                  ? Number(e.target.value)
-                                  : undefined
-                              )
-                            }
+                            onChange={(e) => {
+                              const newPrice = e.target.value
+                                ? Number(e.target.value)
+                                : undefined;
+                              field.onChange(newPrice);
+
+                              const discountValue = form.getValues("discount");
+
+                              if (newPrice && discountValue) {
+                                const calculatedTotalPrice = Math.round(
+                                  newPrice - (newPrice * discountValue) / 100
+                                );
+                                setTotalPrice(calculatedTotalPrice);
+                              } else {
+                                setTotalPrice(undefined);
+                              }
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
@@ -316,24 +335,56 @@ function UpdateProduct({ params }) {
                             className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             placeholder="Discount"
                             {...field}
-                            onChange={(e) =>
-                              field.onChange(
-                                e.target.value
-                                  ? Number(e.target.value)
-                                  : undefined
-                              )
-                            }
+                            onChange={(e) => {
+                              const newDiscount = e.target.value
+                                ? Number(e.target.value)
+                                : undefined;
+                              field.onChange(newDiscount);
+
+                              const originalPrice =
+                                form.getValues("originalPrice");
+
+                              if (
+                                originalPrice &&
+                                newDiscount &&
+                                newDiscount <= 99
+                              ) {
+                                const calculatedTotalPrice = Math.round(
+                                  originalPrice -
+                                    (originalPrice * newDiscount) / 100
+                                );
+                                setTotalPrice(calculatedTotalPrice);
+                              } else if (newDiscount === 0) {
+                                setTotalPrice(originalPrice);
+                              } else {
+                                setTotalPrice(0);
+                              }
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
                         <FormDescription>
-                          Discount in % must be between 1 and 99.
+                          Discount in % must be between 0 and 100.
                         </FormDescription>
                       </FormItem>
                     )}
                   />
                 </div>
-
+                <div className="grid gap-4">
+                  <Label htmlFor="totalPrice">Total Price</Label>
+                  <Input
+                    id="totalPrice"
+                    disable
+                    type="number"
+                    className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    placeholder="Total Price"
+                    value={totalPrice}
+                  />
+                  <p className="text-muted-foreground text-sm ">
+                    It will be calculated automatically based on original price
+                    and discount.
+                  </p>
+                </div>
                 <FormField
                   control={form.control}
                   name="affiliateLink"
@@ -359,10 +410,15 @@ function UpdateProduct({ params }) {
                             <div className="flex items-center gap-2">
                               <Input
                                 type="file"
-                                onChange={(e) =>
-                                  field.onChange(e.target.files?.[0] || null)
-                                }
-                                placeholder="Images"
+                                multiple
+                                accept="image/jpeg,image/png"
+                                onChange={(e) => {
+                                  const files = Array.from(
+                                    e.target.files || []
+                                  );
+                                  field.onChange(files);
+                                  form.trigger("images");
+                                }}
                               />
                               <Button
                                 variant="outline"
@@ -380,14 +436,19 @@ function UpdateProduct({ params }) {
                         </>
                       ) : (
                         <div className="flex items-center gap-2">
-                          {getProduct.images.map((image) => (
-                            <img
-                              key={image}
-                              src={image}
-                              alt=""
-                              className="h-32 w-32 rounded-md object-cover"
-                            />
-                          ))}
+                          {getProduct.images &&
+                            getProduct.images.length > 0 && (
+                              <>
+                                {getProduct.images.map((image) => (
+                                  <img
+                                    key={image}
+                                    src={image}
+                                    alt=""
+                                    className="h-32 w-32 rounded-md object-cover"
+                                  />
+                                ))}
+                              </>
+                            )}
                           <Button
                             variant="outline"
                             size="icon"

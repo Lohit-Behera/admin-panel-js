@@ -29,9 +29,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import RichTextEditor from "@/components/TextEditor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { fetchGetAllCategoriesNames } from "@/lib/features/categorySlice";
 import { withAuth } from "@/components/withAuth";
+import { Label } from "@/components/ui/label";
 
 const createProductSchema = z.object({
   name: z
@@ -49,39 +50,45 @@ const createProductSchema = z.object({
   images: z
     .array(
       z
-        .any()
-        .refine((file) => file instanceof File, {
-          message: "Each thumbnail must be a file.",
-        })
-        .refine((file) => file?.size <= 3 * 1024 * 1024, {
-          message: "Each thumbnail size must be less than 3MB.",
-        })
-        .refine((file) => ["image/jpeg", "image/png"].includes(file?.type), {
-          message: "Only .jpg and .png formats are supported for thumbnails.",
-        })
+        .custom()
+        .refine((file) => file instanceof File, "Each file must be valid.")
+        .refine(
+          (file) => file.size <= 3 * 1024 * 1024,
+          (file) => ({
+            message: `File ${file?.name || "uploaded"} exceeds 3MB limit.`,
+          })
+        )
+        .refine(
+          (file) => ["image/jpeg", "image/png"].includes(file.type),
+          (file) => ({
+            message: `File ${
+              file?.name || "uploaded"
+            } must be a .jpg or .png file.`,
+          })
+        )
     )
     .min(1, { message: "At least one thumbnail is required." })
     .max(5, { message: "You can upload up to 5 thumbnails." }),
-
-  totalPrice: z
+  originalPrice: z
     .number()
-    .positive({ message: "Total price must be a positive number" })
-    .min(1, { message: "Total price must be at least 1" }),
+    .positive({ message: "Selling price must be a positive number" })
+    .min(1, { message: "Selling price must be at least 1" }),
   discount: z
     .number()
     .positive({ message: "Discount must be a positive number" })
-    .min(1, { message: "Discount must be at least 1" })
-    .max(99, { message: "Discount must be at most 99" }),
+    .min(0, { message: "Discount must be at least 0" })
+    .max(100, { message: "Discount must be at most 100" }),
   category: z.string({
     required_error: "Please select a category.",
   }),
-  quantity: z.number().positive({ message: "Price must be a positive number" }),
+  size: z.number().positive({ message: "Size must be a positive number" }),
   isPublic: z.boolean(),
 });
 
 function AddProduct() {
   const dispatch = useDispatch();
   const router = useRouter();
+  const [totalPrice, setTotalPrice] = useState(undefined);
   const getAllCategoriesNames = useSelector(
     (state) => state.category.getAllCategoriesNames.data
   );
@@ -94,7 +101,8 @@ function AddProduct() {
     if (getAllCategoriesNames.length === 0) {
       dispatch(fetchGetAllCategoriesNames());
     }
-  });
+  }, [getAllCategoriesNames.length, dispatch]);
+
   const form = useForm({
     resolver: zodResolver(createProductSchema),
     defaultValues: {
@@ -102,20 +110,18 @@ function AddProduct() {
       productDescription: "",
       productDetail: "",
       affiliateLink: "",
-      totalPrice: undefined,
+      originalPrice: undefined,
       discount: undefined,
       category: "",
-      quantity: undefined,
+      size: undefined,
       images: undefined,
       isPublic: true,
     },
   });
-
   function onSubmit(values) {
     // Create a new FormData instance
     const formData = new FormData();
-
-    // Append all values to the FormData object
+    formData.append("totalPrice", totalPrice);
     Object.entries(values).forEach(([key, value]) => {
       if (key === "images") {
         value.forEach((file) => formData.append("images", file));
@@ -179,15 +185,15 @@ function AddProduct() {
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="quantity"
+                    name="size"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Quantity</FormLabel>
+                        <FormLabel>Size</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
                             className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            placeholder="Quantity"
+                            placeholder="Size"
                             {...field}
                             onChange={(e) =>
                               field.onChange(
@@ -236,23 +242,33 @@ function AddProduct() {
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="totalPrice"
+                    name="originalPrice"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Total Price</FormLabel>
+                        <FormLabel>Original Price</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
                             className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            placeholder="Amount"
+                            placeholder="Original Price"
                             {...field}
-                            onChange={(e) =>
-                              field.onChange(
-                                e.target.value
-                                  ? Number(e.target.value)
-                                  : undefined
-                              )
-                            }
+                            onChange={(e) => {
+                              const newPrice = e.target.value
+                                ? Number(e.target.value)
+                                : undefined;
+                              field.onChange(newPrice);
+
+                              const discountValue = form.getValues("discount");
+
+                              if (newPrice && discountValue) {
+                                const calculatedTotalPrice = Math.round(
+                                  newPrice - (newPrice * discountValue) / 100
+                                );
+                                setTotalPrice(calculatedTotalPrice);
+                              } else {
+                                setTotalPrice(undefined);
+                              }
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
@@ -275,22 +291,56 @@ function AddProduct() {
                             className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             placeholder="Discount"
                             {...field}
-                            onChange={(e) =>
-                              field.onChange(
-                                e.target.value
-                                  ? Number(e.target.value)
-                                  : undefined
-                              )
-                            }
+                            onChange={(e) => {
+                              const newDiscount = e.target.value
+                                ? Number(e.target.value)
+                                : undefined;
+                              field.onChange(newDiscount);
+
+                              const originalPrice =
+                                form.getValues("originalPrice");
+
+                              if (
+                                originalPrice &&
+                                newDiscount &&
+                                newDiscount <= 99
+                              ) {
+                                const calculatedTotalPrice = Math.round(
+                                  originalPrice -
+                                    (originalPrice * newDiscount) / 100
+                                );
+                                setTotalPrice(calculatedTotalPrice);
+                              } else if (newDiscount === 0) {
+                                setTotalPrice(originalPrice);
+                              } else {
+                                setTotalPrice(0);
+                              }
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
                         <FormDescription>
-                          Discount in % must be between 1 and 99.
+                          Discount in % must be between 0 and 100.
                         </FormDescription>
                       </FormItem>
                     )}
                   />
+                </div>
+                <div className="grid gap-4">
+                  <Label htmlFor="totalPrice">Total Price</Label>
+                  <Input
+                    id="totalPrice"
+                    disable
+                    readOnly
+                    type="number"
+                    className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    placeholder="Total Price"
+                    value={totalPrice}
+                  />
+                  <p className="text-muted-foreground text-sm ">
+                    It will be calculated automatically based on original price
+                    and discount.
+                  </p>
                 </div>
 
                 <FormField
@@ -316,11 +366,12 @@ function AddProduct() {
                         <Input
                           type="file"
                           multiple
-                          name="images"
-                          onChange={(e) =>
-                            field.onChange(Array.from(e.target.files || []))
-                          }
-                          placeholder="Images"
+                          accept="image/jpeg,image/png"
+                          onChange={(e) => {
+                            const files = Array.from(e.target.files || []);
+                            field.onChange(files);
+                            form.trigger("images");
+                          }}
                         />
                       </FormControl>
                       <FormMessage />

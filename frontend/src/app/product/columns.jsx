@@ -28,7 +28,7 @@ export const columns = [
     header: "Thumbnail",
     cell: ({ row }) => (
       <img
-        src={row.original.thumbnail}
+        src={row.original.images[0]}
         alt={row.original.name}
         className="h-20 w-20 rounded-md object-cover"
       />
@@ -59,27 +59,27 @@ export const columns = [
     cell: ({ row }) => <p className="line-clamp-3">{row.original.category}</p>,
   },
   {
-    accessorKey: "amount",
+    accessorKey: "originalPrice",
     header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="Amount" />;
+      return <DataTableColumnHeader column={column} title="Original Price" />;
     },
-    cell: ({ row }) => <p className="text-center">{row.original.amount}</p>,
+    cell: ({ row }) => (
+      <p className="text-center">{row.original.originalPrice}</p>
+    ),
   },
   {
     accessorKey: "discount",
     header: ({ column }) => {
       return <DataTableColumnHeader column={column} title="Discount" />;
     },
-    cell: ({ row }) => <p className="text-center">{row.original.discount}</p>,
+    cell: ({ row }) => <p className="text-center">{row.original.discount}%</p>,
   },
   {
-    accessorKey: "sellingPrice",
+    accessorKey: "totalPrice",
     header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="Selling Price" />;
+      return <DataTableColumnHeader column={column} title="Total Price" />;
     },
-    cell: ({ row }) => (
-      <p className="text-center">{row.original.sellingPrice}</p>
-    ),
+    cell: ({ row }) => <p className="text-center">{row.original.totalPrice}</p>,
   },
   {
     accessorKey: "status",

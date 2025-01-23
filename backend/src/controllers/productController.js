@@ -12,9 +12,10 @@ const createProduct = asyncHandler(async (req, res) => {
     productDetail: Joi.string().min(10).max(2000).required(),
     affiliateLink: Joi.string().uri().required(),
     category: Joi.string().required(),
-    quantity: Joi.number().integer().positive().required(),
+    size: Joi.number().integer().positive().required(),
+    originalPrice: Joi.number().positive().required(),
     totalPrice: Joi.number().positive().required(),
-    discount: Joi.number().required().min(1).max(99),
+    discount: Joi.number().required().min(0).max(100),
     isPublic: Joi.boolean().required(),
   });
 
@@ -25,17 +26,18 @@ const createProduct = asyncHandler(async (req, res) => {
       .status(400)
       .json(new ApiResponse(400, null, error.details[0].message));
   }
-
+  
   // Extract validated fields
   const {
     name,
     productDescription,
     productDetail,
     affiliateLink,
+    originalPrice,
     totalPrice,
     discount,
     category,
-    quantity,
+    size,
     isPublic,
   } = value;
 
@@ -57,10 +59,6 @@ const createProduct = asyncHandler(async (req, res) => {
       .status(500)
       .json(new ApiResponse(500, null, "Images upload failed"));
   }
-
-  // calculate discounted price
-  const sellingPrice = totalPrice - (totalPrice * discount) / 100;
-
   // create the product
   const product = await Product.create({
     name,
@@ -69,9 +67,9 @@ const createProduct = asyncHandler(async (req, res) => {
     affiliateLink,
     totalPrice,
     discount,
-    sellingPrice,
+    originalPrice,
     category,
-    quantity,
+    size,
     images: imagesUrls,
     isPublic,
   });
@@ -119,10 +117,10 @@ const getAllProducts = asyncHandler(async (req, res) => {
       $project: {
         name: 1,
         category: 1,
-        thumbnail: 1,
-        amount: 1,
+        images: 1,
+        originalPrice: 1,
         discount: 1,
-        sellingPrice: 1,
+        totalPrice: 1,
         isPublic: 1,
       },
     },
@@ -147,7 +145,7 @@ const getRecentProducts = asyncHandler(async (req, res) => {
   const products = await Product.find()
     .sort({ createdAt: -1 })
     .limit(4)
-    .select("_id name price thumbnail affiliateLink sellingPrice");
+    .select("_id name price thumbnail affiliateLink totalPrice");
   // validate the products
   if (!products) {
     return res
@@ -172,9 +170,10 @@ const updateProduct = asyncHandler(async (req, res) => {
     productDetail: Joi.string().optional(),
     category: Joi.string().optional(),
     affiliateLink: Joi.string().uri().optional(),
+    originalPrice: Joi.number().positive().optional(),
     totalPrice: Joi.number().positive().optional(),
     discount: Joi.number().positive().optional(),
-    quantity: Joi.number().positive().optional(),
+    size: Joi.number().positive().optional(),
     isPublic: Joi.boolean().optional(),
   });
 
@@ -201,9 +200,10 @@ const updateProduct = asyncHandler(async (req, res) => {
     "productDetail",
     "category",
     "affiliateLink",
+    "originalPrice",
     "totalPrice",
     "discount",
-    "quantity",
+    "size",
     "isPublic",
   ];
 
@@ -217,9 +217,14 @@ const updateProduct = asyncHandler(async (req, res) => {
     // validate the image url
     if (!imagesUrls || imagesUrls.length === 0) {
       return res
-        .status(500)
-        .json(new ApiResponse(500, null, "Images upload failed"));
+      .status(500)
+      .json(new ApiResponse(500, null, "Images upload failed"));
     }
+    // delete the existing images from cloudinary
+    product.images.forEach(async (image) => {
+      const publicId = image.split('/').pop().split('.')[0];
+      await deleteFile(publicId, res)
+    })
     product.images = imagesUrls
   }
   
@@ -227,15 +232,10 @@ const updateProduct = asyncHandler(async (req, res) => {
   let hasUpdates = false;
 
   fieldsToUpdate.forEach((field) => {
-    if (value[field] !== undefined && value[field] !== product[field] && field !== "discount") {
+    if (value[field] !== undefined && value[field] !== product[field]) {
       product[field] = value[field];
       hasUpdates = true;
-    }
-    if (field === "discount" && product.discount !== value.discount) {
-      product.discount = value.discount
-      const sellingPrice = product.totalPrice - (product.totalPrice * product.discount) / 100;
-      product.sellingPrice = sellingPrice
-      hasUpdates = true;
+      
     }
   });
 

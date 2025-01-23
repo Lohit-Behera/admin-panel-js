@@ -116,12 +116,14 @@ const FormMessage = React.forwardRef(
         ref={ref}
         id={formMessageId}
         className={cn(
-          "text-sm font-medium text-destructive dark:text-red-600",
+          "flex flex-col space-y-1 text-sm font-medium text-destructive dark:text-red-600",
           className
         )}
         {...props}
       >
-        {body}
+        {error.length > 0
+          ? error.map((err) => <span key={err.message}>{err.message}</span>)
+          : body}
       </p>
     );
   }
