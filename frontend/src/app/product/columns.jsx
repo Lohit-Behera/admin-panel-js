@@ -75,11 +75,13 @@ export const columns = [
     cell: ({ row }) => <p className="text-center">{row.original.discount}%</p>,
   },
   {
-    accessorKey: "totalPrice",
+    accessorKey: "sellingPrice",
     header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="Total Price" />;
+      return <DataTableColumnHeader column={column} title="Selling Price" />;
     },
-    cell: ({ row }) => <p className="text-center">{row.original.totalPrice}</p>,
+    cell: ({ row }) => (
+      <p className="text-center">{row.original.sellingPrice}</p>
+    ),
   },
   {
     accessorKey: "status",

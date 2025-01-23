@@ -26,13 +26,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import RichTextEditor from "@/components/TextEditor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { fetchGetAllCategoriesNames } from "@/lib/features/categorySlice";
 import { withAuth } from "@/components/withAuth";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import dynamic from "next/dynamic";
+const RichTextEditor = dynamic(() => import("@/components/TextEditor"), {
+  ssr: false,
+  loading: () => <Skeleton className="h-[200px] w-full" />,
+});
 
 const createProductSchema = z.object({
   name: z
@@ -45,8 +50,7 @@ const createProductSchema = z.object({
   productDescription: z.string().optional(),
   productDetail: z
     .string()
-    .min(10, { message: "Description must be at least 10 characters" })
-    .max(2000, { message: "Description must be at most 2000 characters" }),
+    .min(10, { message: "Description must be at least 10 characters" }),
   images: z
     .array(
       z
@@ -81,14 +85,17 @@ const createProductSchema = z.object({
   category: z.string({
     required_error: "Please select a category.",
   }),
-  size: z.number().positive({ message: "Size must be a positive number" }),
+  size: z
+    .string()
+    .min(1, { message: "Size must be at least 1 characters" })
+    .max(50, { message: "Size must be at most 50 characters" }),
   isPublic: z.boolean(),
 });
 
 function AddProduct() {
   const dispatch = useDispatch();
   const router = useRouter();
-  const [totalPrice, setTotalPrice] = useState(undefined);
+  const [sellingPrice, setSellingPrice] = useState(undefined);
   const getAllCategoriesNames = useSelector(
     (state) => state.category.getAllCategoriesNames.data
   );
@@ -113,7 +120,7 @@ function AddProduct() {
       originalPrice: undefined,
       discount: undefined,
       category: "",
-      size: undefined,
+      size: "",
       images: undefined,
       isPublic: true,
     },
@@ -121,7 +128,7 @@ function AddProduct() {
   function onSubmit(values) {
     // Create a new FormData instance
     const formData = new FormData();
-    formData.append("totalPrice", totalPrice);
+    formData.append("sellingPrice", sellingPrice);
     Object.entries(values).forEach(([key, value]) => {
       if (key === "images") {
         value.forEach((file) => formData.append("images", file));
@@ -190,19 +197,7 @@ function AddProduct() {
                       <FormItem>
                         <FormLabel>Size</FormLabel>
                         <FormControl>
-                          <Input
-                            type="number"
-                            className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            placeholder="Size"
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(
-                                e.target.value
-                                  ? Number(e.target.value)
-                                  : undefined
-                              )
-                            }
-                          />
+                          <Input placeholder="Size" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -261,12 +256,12 @@ function AddProduct() {
                               const discountValue = form.getValues("discount");
 
                               if (newPrice && discountValue) {
-                                const calculatedTotalPrice = Math.round(
+                                const calculatedSellingPrice = Math.round(
                                   newPrice - (newPrice * discountValue) / 100
                                 );
-                                setTotalPrice(calculatedTotalPrice);
+                                setSellingPrice(calculatedSellingPrice);
                               } else {
-                                setTotalPrice(undefined);
+                                setSellingPrice(undefined);
                               }
                             }}
                           />
@@ -305,15 +300,15 @@ function AddProduct() {
                                 newDiscount &&
                                 newDiscount <= 99
                               ) {
-                                const calculatedTotalPrice = Math.round(
+                                const calculatedSellingPrice = Math.round(
                                   originalPrice -
                                     (originalPrice * newDiscount) / 100
                                 );
-                                setTotalPrice(calculatedTotalPrice);
+                                setSellingPrice(calculatedSellingPrice);
                               } else if (newDiscount === 0) {
-                                setTotalPrice(originalPrice);
+                                setSellingPrice(originalPrice);
                               } else {
-                                setTotalPrice(0);
+                                setSellingPrice(0);
                               }
                             }}
                           />
@@ -327,15 +322,15 @@ function AddProduct() {
                   />
                 </div>
                 <div className="grid gap-4">
-                  <Label htmlFor="totalPrice">Total Price</Label>
+                  <Label htmlFor="sellingPrice">Total Price</Label>
                   <Input
-                    id="totalPrice"
+                    id="sellingPrice"
                     disable
                     readOnly
                     type="number"
                     className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     placeholder="Total Price"
-                    value={totalPrice}
+                    value={sellingPrice}
                   />
                   <p className="text-muted-foreground text-sm ">
                     It will be calculated automatically based on original price

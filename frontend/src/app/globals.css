@@ -92,3 +92,20 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+
+.custom-editor {
+  min-height: 20rem; /* Larger input area */
+  overflow-y: auto; /* Allow scrolling if the content is too large */
+}
+
+.custom-editor .ql-container {
+  border: none; /* Remove the small inner border */
+}
+
+.custom-editor .ql-editor {
+  font-size: 1rem; /* Adjust font size */
+  line-height: 1.5; /* Better spacing for text */
+  min-height: 18rem; /* Matches the larger input area */
+  padding: 0.5rem; /* Remove extra padding */
+}

@@ -1,5 +1,5 @@
 "use client";
-//TODO add detail image field
+
 import { useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,10 +20,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { fetchCreateBlog } from "@/lib/features/blogSlice";
-import dynamic from "next/dynamic";
 import { withAuth } from "@/components/withAuth";
+import { Skeleton } from "@/components/ui/skeleton";
+import dynamic from "next/dynamic";
 const RichTextEditor = dynamic(() => import("@/components/TextEditor"), {
   ssr: false,
+  loading: () => <Skeleton className="h-[200px] w-full" />,
 });
 
 const createBlogSchema = z.object({

@@ -20,12 +20,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { fetchGetBlog, fetchUpdateBlog } from "@/lib/features/blogSlice";
-import dynamic from "next/dynamic";
 import { withAuth } from "@/components/withAuth";
 import { useEffect, useState } from "react";
-import { Check, Pencil, X } from "lucide-react";
+import { Pencil, X } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import dynamic from "next/dynamic";
 const RichTextEditor = dynamic(() => import("@/components/TextEditor"), {
   ssr: false,
+  loading: () => <Skeleton className="h-[200px] w-full" />,
 });
 
 const updateBlogSchema = z.object({

@@ -1,7 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { GalleryVerticalEnd, Minus, Plus } from "lucide-react";
+import {
+  GalleryVerticalEnd,
+  List,
+  Minus,
+  Plus,
+  SquarePlus,
+} from "lucide-react";
 
 import {
   Collapsible,
@@ -24,17 +30,20 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSelector } from "react-redux";
-
+import { Image, LayoutGrid, NotebookPen, Package2 } from "lucide-react";
 const data = {
   navMain: [
     {
       title: "Product",
+      icon: <Package2 />,
       items: [
         {
+          icon: <SquarePlus />,
           title: "Add Product",
           url: "/product/add",
         },
         {
+          icon: <List />,
           title: "All Product",
           url: "/product",
         },
@@ -42,12 +51,15 @@ const data = {
     },
     {
       title: "Blog",
+      icon: <NotebookPen />,
       items: [
         {
+          icon: <SquarePlus />,
           title: "Add Blog",
           url: "/blog/add",
         },
         {
+          icon: <List />,
           title: "All Blog",
           url: "/blog",
         },
@@ -55,12 +67,15 @@ const data = {
     },
     {
       title: "Category",
+      icon: <LayoutGrid />,
       items: [
         {
+          icon: <SquarePlus />,
           title: "Add Category",
           url: "/category/add",
         },
         {
+          icon: <List />,
           title: "All Category",
           url: "/category",
         },
@@ -68,12 +83,15 @@ const data = {
     },
     {
       title: "Banner",
+      icon: <Image />,
       items: [
         {
+          icon: <SquarePlus />,
           title: "Add Banner",
           url: "/banner/add",
         },
         {
+          icon: <List />,
           title: "All Banner",
           url: "/banner",
         },
@@ -122,6 +140,7 @@ export function AppSidebar({ ...props }) {
                     <SidebarMenuItem>
                       <CollapsibleTrigger asChild>
                         <SidebarMenuButton>
+                          {item.icon}
                           {item.title}{" "}
                           <Plus className="ml-auto group-data-[state=open]/collapsible:hidden" />
                           <Minus className="ml-auto group-data-[state=closed]/collapsible:hidden" />
@@ -136,7 +155,10 @@ export function AppSidebar({ ...props }) {
                                   asChild
                                   isActive={item.url === pathname}
                                 >
-                                  <Link href={item.url}>{item.title}</Link>
+                                  <Link href={item.url}>
+                                    {item.icon}
+                                    {item.title}
+                                  </Link>
                                 </SidebarMenuSubButton>
                               </SidebarMenuSubItem>
                             ))}
