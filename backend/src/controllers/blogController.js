@@ -41,7 +41,7 @@ const createBlog = asyncHandler(async (req, res) => {
       .json(new ApiResponse(400, null, "Invalid thumbnail format"));
   }
   // upload thumbnail to cloudinary
-  const thumbnailUrl = await uploadFile(thumbnail, res);
+  const thumbnailUrl = await uploadFile(thumbnail);
   // validate the thumbnail url
   if (!thumbnailUrl) {
     return res
@@ -65,7 +65,7 @@ const createBlog = asyncHandler(async (req, res) => {
       .json(new ApiResponse(400, null, "Invalid Detail image format"));
   }
   // upload detail Image to cloudinary
-  const detailImageUrl = await uploadFile(detailImage, res);
+  const detailImageUrl = await uploadFile(detailImage);
   // validate the detailImage url
   if (!detailImageUrl) {
     return res
@@ -193,7 +193,7 @@ const updateBlog = asyncHandler(async (req, res) => {
         .json(new ApiResponse(400, null, "Invalid image format"));
     }
     // upload thumbnail to cloudinary
-    const thumbnailUrl = await uploadFile(thumbnail, res);
+    const thumbnailUrl = await uploadFile(thumbnail);
     // validate the thumbnail url
     if (!thumbnailUrl) {
       return res
@@ -221,7 +221,7 @@ const updateBlog = asyncHandler(async (req, res) => {
         .json(new ApiResponse(400, null, "Invalid detail image format"));
     }
     // upload detailImage to cloudinary
-    const detailImageUrl = await uploadFile(detailImage, res);
+    const detailImageUrl = await uploadFile(detailImage);
     // validate the detailImage url
     if (!detailImageUrl) {
       return res

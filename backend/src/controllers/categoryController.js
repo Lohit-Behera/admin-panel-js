@@ -42,7 +42,7 @@ const createCategory = asyncHandler(async (req, res) => {
       .json(new ApiResponse(400, null, "Invalid image format"));
   }
   // upload image to cloudinary
-  const thumbnailUrl = await uploadFile(thumbnail, res);
+  const thumbnailUrl = await uploadFile(thumbnail);
   // validate the image url
   if (!thumbnailUrl) {
     return res
@@ -168,7 +168,7 @@ const updateCategory = asyncHandler(async (req, res) => {
         .json(new ApiResponse(400, null, "Invalid image format"));
     }
     // upload image to cloudinary
-    const thumbnailUrl = await uploadFile(thumbnail, res);
+    const thumbnailUrl = await uploadFile(thumbnail);
     // validate the image url
     if (!thumbnailUrl) {
       return res

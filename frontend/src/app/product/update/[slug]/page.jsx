@@ -96,17 +96,14 @@ const updateProductSchema = z.object({
       required_error: "Please select a category.",
     })
     .optional(),
-  size: z
-    .string()
-    .min(1, { message: "Size must be at least 1 characters" })
-    .max(50, { message: "Size must be at most 50 characters" }),
+  size: z.string().min(1, { message: "Size must be at least 1 characters" }),
   isPublic: z.boolean().optional(),
 });
 
 function UpdateProduct({ params }) {
   const dispatch = useDispatch();
   const [editThumbnail, setEditThumbnail] = useState(false);
-  const [sellingPrice, setSellingPrice] = useState(undefined);
+  const [originalPrice, setOriginalPrice] = useState(undefined);
   const [loading, setLoading] = useState(true);
 
   const getProduct = useSelector((state) => state.product.getProduct.data);
@@ -130,7 +127,7 @@ function UpdateProduct({ params }) {
       productDescription: getProduct?.productDescription || "",
       productDetail: getProduct?.productDetail || "",
       images: undefined,
-      originalPrice: getProduct?.originalPrice || undefined,
+      sellingPrice: getProduct?.sellingPrice || undefined,
       discount: getProduct?.discount || undefined,
       category: getProduct?.category || "",
       size: String(getProduct?.size) || "",
@@ -151,13 +148,13 @@ function UpdateProduct({ params }) {
         productDescription: getProduct.productDescription || "",
         productDetail: getProduct.productDetail || "",
         images: undefined,
-        originalPrice: getProduct.originalPrice || undefined,
+        sellingPrice: getProduct.sellingPrice || undefined,
         discount: getProduct.discount || undefined,
         category: getProduct.category || "",
         size: String(getProduct?.size) || "",
         isPublic: getProduct.isPublic || false,
       });
-      setSellingPrice(getProduct.sellingPrice);
+      setOriginalPrice(getProduct.originalPrice);
       setLoading(false);
     }
   }, [getProduct, form, getProductStatus]);
@@ -165,7 +162,7 @@ function UpdateProduct({ params }) {
   function onSubmit(values) {
     // Create a new FormData instance
     const formData = new FormData();
-    formData.append("sellingPrice", sellingPrice);
+    formData.append("originalPrice", originalPrice);
     Object.entries(values).forEach(([key, value]) => {
       if (key === "images" && Array.isArray(value)) {
         value.forEach((file) => formData.append("images", file));
@@ -278,15 +275,15 @@ function UpdateProduct({ params }) {
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="originalPrice"
+                    name="sellingPrice"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Original Price</FormLabel>
+                        <FormLabel>Selling Price</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
                             className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            placeholder="Original Price"
+                            placeholder="Selling Price"
                             {...field}
                             onChange={(e) => {
                               const newPrice = e.target.value
@@ -297,12 +294,12 @@ function UpdateProduct({ params }) {
                               const discountValue = form.getValues("discount");
 
                               if (newPrice && discountValue) {
-                                const calculatedSellingPrice = Math.round(
+                                const calculatedOriginalPrice = Math.round(
                                   newPrice - (newPrice * discountValue) / 100
                                 );
-                                setSellingPrice(calculatedSellingPrice);
+                                setOriginalPrice(calculatedOriginalPrice);
                               } else {
-                                setSellingPrice(undefined);
+                                setOriginalPrice(undefined);
                               }
                             }}
                           />
@@ -333,23 +330,23 @@ function UpdateProduct({ params }) {
                                 : undefined;
                               field.onChange(newDiscount);
 
-                              const originalPrice =
-                                form.getValues("originalPrice");
+                              const sellingPrice =
+                                form.getValues("sellingPrice");
 
                               if (
-                                originalPrice &&
+                                sellingPrice &&
                                 newDiscount &&
                                 newDiscount <= 99
                               ) {
-                                const calculatedSellingPrice = Math.round(
-                                  originalPrice -
-                                    (originalPrice * newDiscount) / 100
+                                const calculatedOriginalPrice = Math.round(
+                                  sellingPrice -
+                                    (sellingPrice * newDiscount) / 100
                                 );
-                                setSellingPrice(calculatedSellingPrice);
+                                setOriginalPrice(calculatedOriginalPrice);
                               } else if (newDiscount === 0) {
-                                setSellingPrice(originalPrice);
+                                setOriginalPrice(sellingPrice);
                               } else {
-                                setSellingPrice(0);
+                                setOriginalPrice(0);
                               }
                             }}
                           />
@@ -363,14 +360,15 @@ function UpdateProduct({ params }) {
                   />
                 </div>
                 <div className="grid gap-4">
-                  <Label htmlFor="sellingPrice">Selling Price</Label>
+                  <Label htmlFor="originalPrice">Original Price</Label>
                   <Input
-                    id="sellingPrice"
+                    id="originalPrice"
                     disable
+                    readOnly
                     type="number"
                     className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    placeholder="Selling Price"
-                    value={sellingPrice}
+                    placeholder="Original Price"
+                    value={originalPrice}
                   />
                   <p className="text-muted-foreground text-sm ">
                     It will be calculated automatically based on original price

@@ -13,8 +13,8 @@ const createProduct = asyncHandler(async (req, res) => {
     affiliateLink: Joi.string().uri().required(),
     category: Joi.string().required(),
     size: Joi.string().min(1).required(),
-    originalPrice: Joi.number().positive().required(),
     sellingPrice: Joi.number().positive().required(),
+    originalPrice: Joi.number().positive().required(),
     discount: Joi.number().required().min(0).max(100),
     isPublic: Joi.boolean().required(),
   });
@@ -33,8 +33,8 @@ const createProduct = asyncHandler(async (req, res) => {
     productDescription,
     productDetail,
     affiliateLink,
-    originalPrice,
     sellingPrice,
+    originalPrice,
     discount,
     category,
     size,
@@ -52,7 +52,17 @@ const createProduct = asyncHandler(async (req, res) => {
   }
   
   // upload images to cloudinary
-  const imagesUrls = await Promise.all(images.map(file => uploadFile(file, res)));
+  const imagesUrls = await Promise.all(
+    images.map(async (file) => {
+      const url = await uploadFile(file);
+      if (!url || typeof url !== "string") {
+        return res
+          .status(500)
+          .json(new ApiResponse(500, null, "Image upload failed"));
+      }
+      return url;
+    })
+  );
   // validate the image url
   if (!imagesUrls || imagesUrls.length === 0) {
     return res
@@ -65,9 +75,9 @@ const createProduct = asyncHandler(async (req, res) => {
     productDescription,
     productDetail,
     affiliateLink,
-    sellingPrice,
-    discount,
     originalPrice,
+    discount,
+    sellingPrice,
     category,
     size,
     images: imagesUrls,
@@ -118,9 +128,9 @@ const getAllProducts = asyncHandler(async (req, res) => {
         name: 1,
         category: 1,
         images: 1,
-        originalPrice: 1,
-        discount: 1,
         sellingPrice: 1,
+        discount: 1,
+        originalPrice: 1,
         isPublic: 1,
       },
     },
@@ -145,7 +155,7 @@ const getRecentProducts = asyncHandler(async (req, res) => {
   const products = await Product.find()
     .sort({ createdAt: -1 })
     .limit(4)
-    .select("_id name price thumbnail affiliateLink sellingPrice");
+    .select("_id name price thumbnail affiliateLink originalPrice");
   // validate the products
   if (!products) {
     return res
@@ -170,8 +180,8 @@ const updateProduct = asyncHandler(async (req, res) => {
     productDetail: Joi.string().optional(),
     category: Joi.string().optional(),
     affiliateLink: Joi.string().uri().optional(),
-    originalPrice: Joi.number().positive().optional(),
     sellingPrice: Joi.number().positive().optional(),
+    originalPrice: Joi.number().positive().optional(),
     discount: Joi.number().positive().optional(),
     size: Joi.string().optional(),
     isPublic: Joi.boolean().optional(),
@@ -200,8 +210,8 @@ const updateProduct = asyncHandler(async (req, res) => {
     "productDetail",
     "category",
     "affiliateLink",
-    "originalPrice",
     "sellingPrice",
+    "originalPrice",
     "discount",
     "size",
     "isPublic",
@@ -213,7 +223,17 @@ const updateProduct = asyncHandler(async (req, res) => {
   // validate the image
   if (images) {
     // upload images to cloudinary
-    const imagesUrls = await Promise.all(images.map(file => uploadFile(file, res)));
+  const imagesUrls = await Promise.all(
+    images.map(async (file) => {
+      const url = await uploadFile(file);
+      if (!url || typeof url !== "string") {
+        return res
+          .status(500)
+          .json(new ApiResponse(500, null, "Image upload failed"));
+      }
+      return url;
+    })
+  );
     // validate the image url
     if (!imagesUrls || imagesUrls.length === 0) {
       return res

@@ -30,7 +30,7 @@ const productSchema = new Schema(
       type: Number,
       required: true,
     },
-    originalPrice: {
+    sellingPrice: {
       type: Number,
       required: true,
     },
@@ -38,7 +38,7 @@ const productSchema = new Schema(
       type: Number,
       required: true,
     },
-    sellingPrice: {
+    originalPrice: {
       type: Number,
       required: true,
     },

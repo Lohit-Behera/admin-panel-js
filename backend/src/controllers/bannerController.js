@@ -17,7 +17,7 @@ const createBanner = asyncHandler(async (req, res) => {
         return res.status(400).json(new ApiResponse(400, null, "Invalid image format"));
     }
     // upload the images
-    const imageUrl = await uploadFile(image, res);
+    const imageUrl = await uploadFile(image);
     // validate the images
     if (!imageUrl) {
         return res.status(500).json(new ApiResponse(500, null, "Image upload failed"));

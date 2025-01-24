@@ -7,7 +7,7 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY || "",
   api_secret: process.env.CLOUDINARY_API_SECRET || "",
 });
-const uploadFile = async (file, res) => {
+const uploadFile = async (file) => {
   try {
     let response;
 
@@ -33,13 +33,7 @@ const uploadFile = async (file, res) => {
       });
       fs.unlinkSync(file.path);
     }
-    const url = (response).url;
-    if (!url || typeof url !== "string") {
-      return res
-        .status(500)
-        .json(new ApiResponse(500, null, "Image upload failed"));
-    }
-    return url;
+    return (response).url;
   } catch (error) {
     console.error(error);
     if (process.env.MEMORY === "false" && file.path) {
@@ -47,15 +41,7 @@ const uploadFile = async (file, res) => {
     } else if (process.env.MEMORY === "true") {
       file.buffer = null;
     }
-    return  res
-      .status(500)
-      .json(
-        new ApiResponse(
-          500,
-          error.message,
-          "Something went wrong while uploading file"
-        )
-      );
+    return null;
   }
 };
 
