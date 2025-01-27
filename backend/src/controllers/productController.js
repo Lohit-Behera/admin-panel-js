@@ -146,23 +146,7 @@ const getProduct = asyncHandler(async (req, res) => {
 
 const getAllProducts = asyncHandler(async (req, res) => {
   // Build the aggregation pipeline
-  const products = await Product.aggregate([
-    {
-      $sort: {
-        createdAt: -1,
-      },
-    },
-    {
-      $project: {
-        name: 1,
-        category: 1,
-        thumbnail: 1,
-        sellingPrice: 1,
-        originalPrice: 1,
-        isPublic: 1,
-      },
-    },
-  ]);
+  const products = await Product.find().sort({ createdAt: -1 });
 
   // Validate the products
   if (!products || products.length === 0) {
