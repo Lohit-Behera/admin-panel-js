@@ -68,13 +68,6 @@ export const columns = [
     ),
   },
   {
-    accessorKey: "discount",
-    header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="Discount" />;
-    },
-    cell: ({ row }) => <p className="text-center">{row.original.discount}%</p>,
-  },
-  {
     accessorKey: "sellingPrice",
     header: ({ column }) => {
       return <DataTableColumnHeader column={column} title="Selling Price" />;
