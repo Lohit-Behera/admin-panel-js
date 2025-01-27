@@ -10,6 +10,9 @@ const productSchema = new Schema(
     productDescription: {
       type: String,
     },
+    productDescriptionImage:{
+      type: String,
+    },
     productDetail: {
       type: String,
       required: true,
@@ -22,6 +25,9 @@ const productSchema = new Schema(
       type: String,
       required: true,
     },
+    thumbnail: {
+      type: String,
+    },
     images: {
       type: [String],
       required: true,
@@ -31,10 +37,6 @@ const productSchema = new Schema(
       required: true,
     },
     sellingPrice: {
-      type: Number,
-      required: true,
-    },
-    discount: {
       type: Number,
       required: true,
     },

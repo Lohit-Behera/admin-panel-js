@@ -15,7 +15,6 @@ const createProduct = asyncHandler(async (req, res) => {
     size: Joi.string().min(1).required(),
     sellingPrice: Joi.number().positive().required(),
     originalPrice: Joi.number().positive().required(),
-    discount: Joi.number().required().min(0).max(100),
     isPublic: Joi.boolean().required(),
   });
 
@@ -35,11 +34,40 @@ const createProduct = asyncHandler(async (req, res) => {
     affiliateLink,
     sellingPrice,
     originalPrice,
-    discount,
     category,
     size,
     isPublic,
   } = value;
+
+  // get thumbnail from the request
+  const thumbnail = req.files.thumbnail ? req.files.thumbnail[0] : null;
+  if (!thumbnail) {
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "Thumbnail is required"));
+  }
+  
+  const thumbnailUrl = await uploadFile(thumbnail);
+  if (!thumbnailUrl || typeof thumbnailUrl !== "string") {
+    return res
+      .status(500)
+      .json(new ApiResponse(500, null, "Thumbnail upload failed"));
+  }
+
+  // get product description image from the request
+  const productDescriptionImage = req.files.productDescriptionImage ? req.files.productDescriptionImage[0] : null;
+  if (!productDescriptionImage) {
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "Product description image is required"));
+  }
+  const productDescriptionImageUrl = await uploadFile(productDescriptionImage);
+
+  if (!productDescriptionImageUrl || typeof productDescriptionImageUrl !== "string") {
+    return res
+      .status(500)
+      .json(new ApiResponse(500, null, "Product description image upload failed"));
+  }
 
   // get images from the request
   const images = req.files.images;
@@ -48,7 +76,7 @@ const createProduct = asyncHandler(async (req, res) => {
   if (!images || images.length === 0) {
     return res
       .status(400)
-      .json(new ApiResponse(400, null, "Thumbnail is required"));
+      .json(new ApiResponse(400, null, "Images is required"));
   }
   
   // upload images to cloudinary
@@ -76,11 +104,12 @@ const createProduct = asyncHandler(async (req, res) => {
     productDetail,
     affiliateLink,
     originalPrice,
-    discount,
     sellingPrice,
     category,
     size,
     images: imagesUrls,
+    thumbnail: thumbnailUrl,
+    productDescriptionImage: productDescriptionImageUrl,
     isPublic,
   });
   // validate the product creation
@@ -127,9 +156,8 @@ const getAllProducts = asyncHandler(async (req, res) => {
       $project: {
         name: 1,
         category: 1,
-        images: 1,
+        thumbnail: 1,
         sellingPrice: 1,
-        discount: 1,
         originalPrice: 1,
         isPublic: 1,
       },
@@ -182,7 +210,6 @@ const updateProduct = asyncHandler(async (req, res) => {
     affiliateLink: Joi.string().uri().optional(),
     sellingPrice: Joi.number().positive().optional(),
     originalPrice: Joi.number().positive().optional(),
-    discount: Joi.number().positive().optional(),
     size: Joi.string().optional(),
     isPublic: Joi.boolean().optional(),
   });
@@ -212,10 +239,43 @@ const updateProduct = asyncHandler(async (req, res) => {
     "affiliateLink",
     "sellingPrice",
     "originalPrice",
-    "discount",
     "size",
     "isPublic",
   ];
+
+  // get thumbnail from the request
+  const thumbnail = req.files.thumbnail;
+
+  if (thumbnail) {
+    const thumbnailUrl = await uploadFile(thumbnail[0]);
+    if (!thumbnailUrl || typeof thumbnailUrl !== "string") {
+      return res
+        .status(500)
+        .json(new ApiResponse(500, null, "Thumbnail upload failed"));
+    }
+    if (thumbnailUrl) {
+      const publicId = product.thumbnail.split('/').pop().split('.')[0];
+      await deleteFile(publicId, res)
+    }
+    product.thumbnail = thumbnailUrl;
+  }
+
+  // get productDescriptionImage from the request
+  const productDescriptionImage = req.files.productDescriptionImage;
+
+  if (productDescriptionImage) {
+    const productDescriptionImageUrl = await uploadFile(productDescriptionImage[0]);
+    if (!productDescriptionImageUrl || typeof productDescriptionImageUrl !== "string") {
+      return res
+        .status(500)
+        .json(new ApiResponse(500, null, "Product description image upload failed"));
+    }
+    if (productDescriptionImageUrl) {
+      const publicId = product.productDescriptionImage.split('/').pop().split('.')[0];
+      await deleteFile(publicId, res)
+    }
+    product.productDescriptionImage = productDescriptionImageUrl;
+  }
 
   // get images from the request
   const images = req.files.images;
@@ -259,7 +319,7 @@ const updateProduct = asyncHandler(async (req, res) => {
     }
   });
 
-  if (!hasUpdates && !images) {
+  if (!hasUpdates && !images && !thumbnail && !productDescriptionImage) {
     return res
       .status(400)
       .json(new ApiResponse(400, null, "No fields to update"));
@@ -297,6 +357,15 @@ const deleteProduct = asyncHandler(async (req, res) => {
       const publicId = image.split('/').pop().split('.')[0];
       await deleteFile(publicId, res)
     })
+  }
+
+  if (product.thumbnail) {
+    const publicId = product.thumbnail.split('/').pop().split('.')[0];
+    await deleteFile(publicId, res)
+  }
+  if (product.productDescriptionImage) {
+    const publicId = product.productDescriptionImage.split('/').pop().split('.')[0];
+    await deleteFile(publicId, res)
   }
   // delete the product
   const deletedProduct = await Product.findByIdAndDelete(productId);

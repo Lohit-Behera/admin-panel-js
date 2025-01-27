@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
+import React, { useState, useEffect } from "react";
+import Quill from "quill";
+import "quill/dist/quill.snow.css";
 import {
   Bold,
   Italic,
@@ -23,92 +23,93 @@ import {
 } from "@/components/ui/select";
 
 const RichTextEditor = ({ value, onChange }) => {
-  const [editor, setEditor] = useState(null);
+  const [quillEditor, setQuillEditor] = useState(null);
+  const [editorRef, setEditorRef] = useState(null);
 
-  const handleBold = () => {
-    editor?.getEditor().format("bold", !editor.getEditor().getFormat().bold);
+  const initializeQuill = (ref) => {
+    if (ref && !quillEditor) {
+      const editor = new Quill(ref, {
+        theme: "snow",
+        modules: {
+          toolbar: false,
+          clipboard: {
+            matchVisual: false,
+          },
+        },
+      });
+
+      // Remove background and text color when pasting
+      editor.clipboard.addMatcher(Node.ELEMENT_NODE, (node, delta) => {
+        delta.ops = delta.ops.map((op) => {
+          if (op.attributes) {
+            delete op.attributes.background;
+            delete op.attributes.color;
+          }
+          return op;
+        });
+        return delta;
+      });
+
+      editor.root.innerHTML = value || "";
+      editor.on("text-change", () => {
+        onChange(editor.root.innerHTML);
+      });
+      setQuillEditor(editor);
+    }
   };
 
-  const handleItalic = () => {
-    editor
-      ?.getEditor()
-      .format("italic", !editor.getEditor().getFormat().italic);
+  const handleFormat = (format) => {
+    if (!quillEditor) return;
+    const currentFormat = quillEditor.getFormat();
+    quillEditor.format(format, !currentFormat[format]);
   };
 
-  const handleStrike = () => {
-    editor
-      ?.getEditor()
-      .format("strike", !editor.getEditor().getFormat().strike);
+  const handleListFormat = (listType) => {
+    if (!quillEditor) return;
+    const currentFormat = quillEditor.getFormat();
+    quillEditor.format(
+      "list",
+      currentFormat.list === listType ? false : listType
+    );
   };
 
-  const handleBulletList = () => {
-    editor
-      ?.getEditor()
-      .format(
-        "list",
-        editor.getEditor().getFormat().list === "bullet" ? false : "bullet"
-      );
-  };
-
-  const handleUnderline = () => {
-    editor
-      ?.getEditor()
-      .format("underline", !editor.getEditor().getFormat().underline);
-  };
-
-  const handleOrderedList = () => {
-    editor
-      ?.getEditor()
-      .format(
-        "list",
-        editor.getEditor().getFormat().list === "ordered" ? false : "ordered"
-      );
-  };
-
-  // Add Heading Select
   const handleHeading = (level) => {
-    if (level === "normal") {
-      editor?.getEditor().format("header", false);
-    } else {
-      editor?.getEditor().format("header", level);
-    }
+    if (!quillEditor) return;
+    quillEditor.format("header", level === "normal" ? false : Number(level));
   };
 
-  // Handle Font Family Selection
   const handleFontFamily = (font) => {
-    if (font === "normal") {
-      editor?.getEditor().format("font", false); // Reset font family
-    } else {
-      editor?.getEditor().format("font", font);
-    }
+    if (!quillEditor) return;
+    quillEditor.format("font", font === "normal" ? false : font);
   };
+
   return (
     <div className="space-y-3">
       {/* Custom Toolbar */}
       <div className="flex flex-wrap border border-input bg-background rounded-t-md p-1 items-center gap-1">
-        <Toggle onClick={handleBold}>
+        <Toggle onClick={() => handleFormat("bold")}>
           <Bold className="h-4 w-4" />
         </Toggle>
-        <Toggle onClick={handleItalic}>
+        <Toggle onClick={() => handleFormat("italic")}>
           <Italic className="h-4 w-4" />
         </Toggle>
-        <Toggle onClick={handleStrike}>
+        <Toggle onClick={() => handleFormat("strike")}>
           <Strikethrough className="h-4 w-4" />
         </Toggle>
-        <Toggle onClick={handleUnderline}>
+        <Toggle onClick={() => handleFormat("underline")}>
           <Underline className="h-4 w-4" />
         </Toggle>
         <Separator orientation="vertical" className="w-[1px] h-8" />
-        <Toggle onClick={handleBulletList}>
+        <Toggle onClick={() => handleListFormat("bullet")}>
           <List className="h-4 w-4" />
         </Toggle>
-        <Toggle onClick={handleOrderedList}>
+        <Toggle onClick={() => handleListFormat("ordered")}>
           <ListOrdered className="h-4 w-4" />
         </Toggle>
         <Separator orientation="vertical" className="w-[1px] h-8" />
 
         <div className="flex gap-2">
-          {/* Heading Dropdown using Radix UI Select */}
+          {/* Heading Dropdown */}
           <Select onValueChange={handleHeading}>
             <SelectTrigger>
               <SelectValue placeholder="Heading" />
@@ -122,7 +123,7 @@ const RichTextEditor = ({ value, onChange }) => {
             </SelectContent>
           </Select>
 
-          {/* Font Family Dropdown using Radix UI Select */}
+          {/* Font Family Dropdown */}
           <Select onValueChange={handleFontFamily}>
             <SelectTrigger>
               <SelectValue placeholder="Font" />
@@ -139,13 +140,9 @@ const RichTextEditor = ({ value, onChange }) => {
       </div>
 
       {/* Quill Editor */}
-      <ReactQuill
-        ref={(quillRef) => setEditor(quillRef)}
-        value={value}
-        onChange={onChange}
-        theme="snow"
-        modules={{ toolbar: false }}
-        className="custom-editor bg-background"
+      <div
+        ref={initializeQuill}
+        className="custom-editor bg-background min-h-[200px]"
       />
     </div>
   );

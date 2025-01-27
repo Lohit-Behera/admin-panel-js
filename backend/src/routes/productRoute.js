@@ -15,7 +15,7 @@ const productRouter = Router();
 // create product
 productRouter.post(
   "/create",
-  upload.fields([{ name: "images", maxCount: 5 }]),
+  upload.fields([{ name: "images", maxCount: 5 }, { name: "thumbnail" }, { name: "productDescriptionImage"}]),
   resizeImage,
   createProduct
 );

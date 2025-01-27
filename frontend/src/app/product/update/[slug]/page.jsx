@@ -53,9 +53,33 @@ const updateProductSchema = z.object({
     .url({ message: "Affiliate link must be a valid URL" })
     .optional(),
   productDescription: z.string().optional(),
+  productDescriptionImage: z
+    .any()
+    .refine((file) => file instanceof File, {
+      message: "Product description image must be a valid file.",
+    })
+    .refine((file) => file?.size <= 3 * 1024 * 1024, {
+      message: "Product description image size must be less than 3MB.",
+    })
+    .refine((file) => ["image/jpeg", "image/png"].includes(file?.type), {
+      message: "Only .jpg and .png formats are supported.",
+    })
+    .optional(),
   productDetail: z
     .string()
     .min(10, { message: "Description must be at least 10 characters" })
+    .optional(),
+  thumbnail: z
+    .any()
+    .refine((file) => file instanceof File, {
+      message: "Thumbnail must be a valid file.",
+    })
+    .refine((file) => file?.size <= 3 * 1024 * 1024, {
+      message: "Thumbnail size must be less than 3MB.",
+    })
+    .refine((file) => ["image/jpeg", "image/png"].includes(file?.type), {
+      message: "Only .jpg and .png formats are supported.",
+    })
     .optional(),
   images: z
     .array(
@@ -80,16 +104,15 @@ const updateProductSchema = z.object({
     .min(1, { message: "At least one thumbnail is required." })
     .max(5, { message: "You can upload up to 5 thumbnails." })
     .optional(),
-  originalPrice: z
+  sellingPrice: z
     .number()
     .positive({ message: "Selling price must be a positive number" })
     .min(1, { message: "Selling price must be at least 1" })
     .optional(),
-  discount: z
+  originalPrice: z
     .number()
-    .positive({ message: "Discount must be a positive number" })
-    .min(0, { message: "Discount must be at least 0" })
-    .max(100, { message: "Discount must be at most 100" })
+    .positive({ message: "Original price must be a positive number" })
+    .min(1, { message: "Original price must be at least 1" })
     .optional(),
   category: z
     .string({
@@ -103,7 +126,9 @@ const updateProductSchema = z.object({
 function UpdateProduct({ params }) {
   const dispatch = useDispatch();
   const [editThumbnail, setEditThumbnail] = useState(false);
-  const [originalPrice, setOriginalPrice] = useState(undefined);
+  const [editImage, setEditImages] = useState(false);
+  const [editProductDescriptionImage, setEditProductDescriptionImage] =
+    useState(false);
   const [loading, setLoading] = useState(true);
 
   const getProduct = useSelector((state) => state.product.getProduct.data);
@@ -127,8 +152,10 @@ function UpdateProduct({ params }) {
       productDescription: getProduct?.productDescription || "",
       productDetail: getProduct?.productDetail || "",
       images: undefined,
+      thumbnail: undefined,
+      productDescriptionImage: undefined,
       sellingPrice: getProduct?.sellingPrice || undefined,
-      discount: getProduct?.discount || undefined,
+      originalPrice: getProduct?.originalPrice || undefined,
       category: getProduct?.category || "",
       size: String(getProduct?.size) || "",
       isPublic: getProduct?.isPublic || false,
@@ -148,13 +175,14 @@ function UpdateProduct({ params }) {
         productDescription: getProduct.productDescription || "",
         productDetail: getProduct.productDetail || "",
         images: undefined,
+        thumbnail: undefined,
+        productDescriptionImage: undefined,
         sellingPrice: getProduct.sellingPrice || undefined,
-        discount: getProduct.discount || undefined,
+        originalPrice: getProduct.originalPrice || undefined,
         category: getProduct.category || "",
         size: String(getProduct?.size) || "",
         isPublic: getProduct.isPublic || false,
       });
-      setOriginalPrice(getProduct.originalPrice);
       setLoading(false);
     }
   }, [getProduct, form, getProductStatus]);
@@ -162,7 +190,6 @@ function UpdateProduct({ params }) {
   function onSubmit(values) {
     // Create a new FormData instance
     const formData = new FormData();
-    formData.append("originalPrice", originalPrice);
     Object.entries(values).forEach(([key, value]) => {
       if (key === "images" && Array.isArray(value)) {
         value.forEach((file) => formData.append("images", file));
@@ -180,6 +207,7 @@ function UpdateProduct({ params }) {
       success: (data) => {
         dispatch(fetchGetProduct(params.slug));
         setEditThumbnail(false);
+        setEditImages(false);
         return data.message || "Product updated successfully";
       },
       error: (error) => {
@@ -275,6 +303,34 @@ function UpdateProduct({ params }) {
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
+                    name="originalPrice"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Original Price</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            placeholder="Original Price"
+                            {...field}
+                            onChange={(e) => {
+                              e.target.value
+                                ? Number(e.target.value)
+                                : undefined;
+                            }}
+                          />
+                        </FormControl>
+
+                        <FormMessage />
+                        <FormDescription>
+                          Full price of the product.
+                        </FormDescription>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
                     name="sellingPrice"
                     render={({ field }) => (
                       <FormItem>
@@ -286,94 +342,19 @@ function UpdateProduct({ params }) {
                             placeholder="Selling Price"
                             {...field}
                             onChange={(e) => {
-                              const newPrice = e.target.value
+                              e.target.value
                                 ? Number(e.target.value)
                                 : undefined;
-                              field.onChange(newPrice);
-
-                              const discountValue = form.getValues("discount");
-
-                              if (newPrice && discountValue) {
-                                const calculatedOriginalPrice = Math.round(
-                                  newPrice - (newPrice * discountValue) / 100
-                                );
-                                setOriginalPrice(calculatedOriginalPrice);
-                              } else {
-                                setOriginalPrice(undefined);
-                              }
                             }}
                           />
                         </FormControl>
                         <FormMessage />
                         <FormDescription>
-                          Full price of the product.
+                          Discounted price of the product.
                         </FormDescription>
                       </FormItem>
                     )}
                   />
-
-                  <FormField
-                    control={form.control}
-                    name="discount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Discount</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            placeholder="Discount"
-                            {...field}
-                            onChange={(e) => {
-                              const newDiscount = e.target.value
-                                ? Number(e.target.value)
-                                : undefined;
-                              field.onChange(newDiscount);
-
-                              const sellingPrice =
-                                form.getValues("sellingPrice");
-
-                              if (
-                                sellingPrice &&
-                                newDiscount &&
-                                newDiscount <= 99
-                              ) {
-                                const calculatedOriginalPrice = Math.round(
-                                  sellingPrice -
-                                    (sellingPrice * newDiscount) / 100
-                                );
-                                setOriginalPrice(calculatedOriginalPrice);
-                              } else if (newDiscount === 0) {
-                                setOriginalPrice(sellingPrice);
-                              } else {
-                                setOriginalPrice(0);
-                              }
-                            }}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                        <FormDescription>
-                          Discount in % must be between 0 and 100.
-                        </FormDescription>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div className="grid gap-4">
-                  <Label htmlFor="originalPrice">Original Price</Label>
-                  <Input
-                    id="originalPrice"
-                    disable
-                    readOnly
-                    type="number"
-                    className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    placeholder="Original Price"
-                    value={originalPrice}
-                  />
-                  <p className="text-muted-foreground text-sm ">
-                    It will be calculated automatically based on original price
-                    and discount.
-                  </p>
                 </div>
                 <FormField
                   control={form.control}
@@ -390,11 +371,64 @@ function UpdateProduct({ params }) {
                 />
                 <FormField
                   control={form.control}
+                  name="thumbnail"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Thumbnail</FormLabel>
+                      {editThumbnail ? (
+                        <FormControl>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="file"
+                              onChange={(e) =>
+                                field.onChange(e.target.files?.[0] || null)
+                              }
+                              placeholder="Thumbnail"
+                            />
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setEditThumbnail(false);
+                              }}
+                            >
+                              <X />
+                            </Button>
+                          </div>
+                        </FormControl>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          {getProduct.thumbnail && (
+                            <img
+                              src={getProduct.thumbnail}
+                              alt=""
+                              className="h-32 w-32 rounded-md object-cover"
+                            />
+                          )}
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setEditThumbnail(true);
+                            }}
+                          >
+                            <Pencil />
+                          </Button>
+                        </div>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
                   name="images"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>images</FormLabel>
-                      {editThumbnail ? (
+                      <FormLabel>Images</FormLabel>
+                      {editImage ? (
                         <>
                           <FormControl>
                             <div className="flex items-center gap-2">
@@ -415,7 +449,7 @@ function UpdateProduct({ params }) {
                                 size="icon"
                                 onClick={(e) => {
                                   e.preventDefault();
-                                  setEditThumbnail(false);
+                                  setEditImages(false);
                                 }}
                               >
                                 <X />
@@ -444,7 +478,7 @@ function UpdateProduct({ params }) {
                             size="icon"
                             onClick={(e) => {
                               e.preventDefault();
-                              setEditThumbnail(true);
+                              setEditImages(true);
                             }}
                           >
                             <Pencil />
@@ -471,50 +505,85 @@ function UpdateProduct({ params }) {
                     </FormItem>
                   )}
                 />
-                <Tabs defaultValue="details" className="w-full">
-                  <TabsList>
-                    <TabsTrigger value="details">Product Details</TabsTrigger>
-                    <TabsTrigger value="description">
-                      Product Description
-                    </TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="details">
-                    <FormField
-                      control={form.control}
-                      name="productDetail"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Product Detail</FormLabel>
-                          <FormControl>
-                            <RichTextEditor
-                              {...field}
-                              value={field.value || ""}
+                <FormField
+                  control={form.control}
+                  name="productDetail"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Product Detail</FormLabel>
+                      <FormControl>
+                        <RichTextEditor {...field} value={field.value || ""} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="productDescriptionImage"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Product Description Image</FormLabel>
+                      {editProductDescriptionImage ? (
+                        <FormControl>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="file"
+                              onChange={(e) =>
+                                field.onChange(e.target.files?.[0] || null)
+                              }
+                              placeholder="Product Description Image"
                             />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </TabsContent>
-                  <TabsContent value="description">
-                    <FormField
-                      control={form.control}
-                      name="productDescription"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Product Description</FormLabel>
-                          <FormControl>
-                            <RichTextEditor
-                              {...field}
-                              value={field.value || ""}
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setEditProductDescriptionImage(false);
+                              }}
+                            >
+                              <X />
+                            </Button>
+                          </div>
+                        </FormControl>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          {getProduct.productDescriptionImage && (
+                            <img
+                              src={getProduct.productDescriptionImage}
+                              alt=""
+                              className="h-32 w-32 rounded-md object-cover"
                             />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
+                          )}
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setEditProductDescriptionImage(true);
+                            }}
+                          >
+                            <Pencil />
+                          </Button>
+                        </div>
                       )}
-                    />
-                  </TabsContent>
-                </Tabs>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="productDescription"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Product Description</FormLabel>
+                      <FormControl>
+                        <RichTextEditor {...field} value={field.value || ""} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <Button type="submit" size="sm" className="w-full">
                   Submit
                 </Button>

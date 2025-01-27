@@ -28,7 +28,7 @@ export const columns = [
     header: "Thumbnail",
     cell: ({ row }) => (
       <img
-        src={row.original.images[0]}
+        src={row.original.thumbnail}
         alt={row.original.name}
         className="h-20 w-20 rounded-md object-cover"
       />
