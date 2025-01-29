@@ -164,7 +164,7 @@ function AddProduct() {
     toast.promise(createProductPromise, {
       loading: "Creating product...",
       success: (data) => {
-        router.push(`/product?search=${data.data}`);
+        router.push(`/product/update/${data.data}`);
         return data.message || "Product created successfully";
       },
       error: (error) => {

@@ -33,7 +33,7 @@ const productSchema = new Schema(
       required: true,
     },
     size: {
-      type: Number,
+      type: String,
       required: true,
     },
     sellingPrice: {
