@@ -9,6 +9,13 @@ const createCategory = asyncHandler(async (req, res) => {
   const schema = Joi.object({
     name: Joi.string().min(3).max(50).required(),
     isPublic: Joi.boolean().required(),
+    subCategories: Joi.array()
+      .items(
+        Joi.object({
+          name: Joi.string().min(1).max(50).required(),
+          isPublic: Joi.boolean().required(),
+        })
+    )
   });
 
   // Validate request body
@@ -18,7 +25,7 @@ const createCategory = asyncHandler(async (req, res) => {
       .status(400)
       .json(new ApiResponse(400, null, error.details[0].message));
   }
-  const { name, isPublic } = value;
+  const { name, isPublic, subCategories } = value;
   // check if category already exists
   const categoryExists = await Category.findOne({ name });
   if (categoryExists) {
@@ -53,6 +60,7 @@ const createCategory = asyncHandler(async (req, res) => {
   const category = await Category.create({
     name,
     thumbnail: thumbnailUrl,
+    subCategories,
     isPublic,
   });
   // validate the category creation
@@ -82,6 +90,7 @@ const getAllCategories = asyncHandler(async (req, res) => {
         name: 1,
         thumbnail: 1,
         isPublic: 1,
+        subCategories: 1
       },
     },
   ]);
@@ -101,7 +110,7 @@ const getAllCategories = asyncHandler(async (req, res) => {
 
 const getAllCategoriesNames = asyncHandler(async (req, res) => {
   // get all categories
-  const categories = await Category.find().select("name").sort({ name: 1 });
+  const categories = await Category.find().select("name isPublic subCategories _id").sort({ name: 1 });
   // validate the categories
   if (!categories) {
     return res
@@ -137,10 +146,19 @@ const updateCategory = asyncHandler(async (req, res) => {
     _id: Joi.string().optional(),
     name: Joi.string().min(3).max(50).optional(),
     isPublic: Joi.boolean().required(),
+    subCategories: Joi.array()
+      .items(
+        Joi.object({
+          _id: Joi.string().optional(),
+          name: Joi.string().min(1).max(50).optional(),
+          isPublic: Joi.boolean().optional(),
+        })
+    )
   });
 
   // Validate request body
   const { error, value } = schema.validate(req.body);
+  
   if (error) {
     return res
       .status(400)
@@ -194,6 +212,15 @@ const updateCategory = asyncHandler(async (req, res) => {
       hasUpdates = true;
     }
   });
+
+  if (
+    value.subCategories !== undefined &&
+    JSON.stringify(value.subCategories) !==
+      JSON.stringify(category.subCategories)
+  ) {
+    category.subCategories = value.subCategories;
+    hasUpdates = true;
+  }
 
   if (!hasUpdates && !thumbnail) {
     return res

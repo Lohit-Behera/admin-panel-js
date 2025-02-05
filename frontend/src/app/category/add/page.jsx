@@ -20,6 +20,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { fetchCreateCategory } from "@/lib/features/categorySlice";
 import { withAuth } from "@/components/withAuth";
+import { useState } from "react";
+import { Trash2 } from "lucide-react";
 
 const createCategorySchema = z.object({
   name: z
@@ -44,6 +46,10 @@ function AddCategory() {
   const dispatch = useDispatch();
   const router = useRouter();
 
+  const [subCategories, setSubCategories] = useState([]);
+  const [subCategoryName, setSubCategoryName] = useState("");
+  const [subCategoryIsPublic, setSubCategoryIsPublic] = useState(true);
+
   const form = useForm({
     resolver: zodResolver(createCategorySchema),
     defaultValues: {
@@ -54,9 +60,14 @@ function AddCategory() {
   });
 
   const onSubmit = async (values) => {
-    const createCategoryPromise = dispatch(
-      fetchCreateCategory(values)
-    ).unwrap();
+    const data = {
+      name: values.name,
+      isPublic: values.isPublic,
+      thumbnail: values.thumbnail,
+      subCategories: subCategories,
+    };
+
+    const createCategoryPromise = dispatch(fetchCreateCategory(data)).unwrap();
     toast.promise(createCategoryPromise, {
       loading: "Creating category...",
       success: (data) => {
@@ -131,7 +142,90 @@ function AddCategory() {
                 </FormItem>
               )}
             />
-
+            <h2 className="text-base md:text-lg font-semibold">
+              Add Sub Categories
+            </h2>
+            <div className="grid gap-4">
+              <div className="flex flex-col space-y-4 p-4 rounded-md border min-h-40">
+                <div className="flex items-center gap-2 w-full h-full">
+                  <Input
+                    value={subCategoryName}
+                    onChange={(e) => setSubCategoryName(e.target.value)}
+                    placeholder="Enter sub category name"
+                  />
+                </div>
+                <div className="flex items-center gap-2 w-full h-full">
+                  <Checkbox
+                    checked={subCategoryIsPublic}
+                    onCheckedChange={(e) => setSubCategoryIsPublic(e)}
+                  />
+                  <span>Is Public</span>
+                </div>
+                <Button
+                  className="h-8"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (subCategoryName.length === 0) {
+                      toast.warning("Please enter a name for the sub category");
+                    } else if (
+                      subCategories.some(
+                        (subCategory) => subCategory.name === subCategoryName
+                      )
+                    ) {
+                      toast.warning("Sub category name already exists");
+                    } else {
+                      setSubCategories([
+                        ...subCategories,
+                        {
+                          name: subCategoryName,
+                          isPublic: subCategoryIsPublic,
+                        },
+                      ]);
+                      setSubCategoryName("");
+                      setSubCategoryIsPublic(true);
+                    }
+                  }}
+                >
+                  Add
+                </Button>
+              </div>
+              {subCategories.length > 0 && (
+                <div className="flex flex-col space-y-4 p-4 rounded-md border">
+                  {subCategories.map((subCategory, index) => (
+                    <div
+                      key={index}
+                      className="flex justify-between items-center gap-2 w-full h-full bg-muted-foreground/10 p-2 rounded-md"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span>{index + 1}.</span>
+                        <span>{subCategory.name}</span>
+                        <Checkbox
+                          checked={subCategory.isPublic}
+                          onCheckedChange={(e) => {
+                            const updatedSubCategories = [...subCategories];
+                            updatedSubCategories[index].isPublic = e;
+                            setSubCategories(updatedSubCategories);
+                          }}
+                        />
+                        <span>Is Public</span>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          const updatedSubCategories = [...subCategories];
+                          updatedSubCategories.splice(index, 1);
+                          setSubCategories(updatedSubCategories);
+                        }}
+                      >
+                        <Trash2 />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             <Button className="w-full" type="submit">
               Submit
             </Button>

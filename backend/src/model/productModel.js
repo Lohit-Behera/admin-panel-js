@@ -25,6 +25,10 @@ const productSchema = new Schema(
       type: String,
       required: true,
     },
+    subCategory: {
+      type: String,
+      required: true,
+    },
     thumbnail: {
       type: String,
     },

@@ -24,7 +24,7 @@ import {
   fetchGetCategory,
   fetchUpdateCategory,
 } from "@/lib/features/categorySlice";
-import { Pencil, X } from "lucide-react";
+import { Pencil, Trash2, X } from "lucide-react";
 
 const updateCategorySchema = z.object({
   name: z
@@ -51,25 +51,19 @@ function UpdateCategory({ params }) {
   const router = useRouter();
 
   const category = useSelector((state) => state.category.getCategory.data);
+
   const getCategoryStatus = useSelector(
     (state) => state.category.getCategoryStatus
   );
 
   const [editThumbnail, setEditThumbnail] = useState(false);
+  const [subCategories, setSubCategories] = useState([]);
+  const [subCategoryName, setSubCategoryName] = useState("");
+  const [subCategoryIsPublic, setSubCategoryIsPublic] = useState(true);
 
   useEffect(() => {
     dispatch(fetchGetCategory(params.slug));
   }, [params.slug, dispatch]);
-
-  useEffect(() => {
-    if (category) {
-      form.reset({
-        name: category.name || "",
-        isPublic: category.isPublic || true,
-        thumbnail: undefined,
-      });
-    }
-  }, [category, form]);
 
   const form = useForm({
     resolver: zodResolver(updateCategorySchema),
@@ -80,10 +74,27 @@ function UpdateCategory({ params }) {
     },
   });
 
+  useEffect(() => {
+    if (getCategoryStatus === "succeeded" && category) {
+      form.reset({
+        name: category.name || "",
+        isPublic: category.isPublic || true,
+        thumbnail: undefined,
+      });
+      setSubCategories(category.subCategories);
+    }
+  }, [category, form, getCategoryStatus]);
+
   const onSubmit = async (values) => {
-    const updateCategoryPromise = dispatch(
-      fetchUpdateCategory({ _id: category?._id, ...values })
-    ).unwrap();
+    const data = {
+      _id: category?._id,
+      name: values.name,
+      isPublic: values.isPublic,
+      thumbnail: values.thumbnail,
+      subCategories: subCategories,
+    };
+
+    const updateCategoryPromise = dispatch(fetchUpdateCategory(data)).unwrap();
 
     toast.promise(updateCategoryPromise, {
       loading: "Updating category...",
@@ -201,6 +212,98 @@ function UpdateCategory({ params }) {
                     </FormItem>
                   )}
                 />
+
+                <h2 className="text-base md:text-lg font-semibold">
+                  Add Sub Categories
+                </h2>
+                <div className="grid gap-4">
+                  <div className="flex flex-col space-y-4 p-4 rounded-md border min-h-40">
+                    <div className="flex items-center gap-2 w-full h-full">
+                      <Input
+                        value={subCategoryName}
+                        onChange={(e) => setSubCategoryName(e.target.value)}
+                        placeholder="Enter sub category name"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 w-full h-full">
+                      <Checkbox
+                        checked={subCategoryIsPublic}
+                        onCheckedChange={(e) => setSubCategoryIsPublic(e)}
+                      />
+                      <span>Is Public</span>
+                    </div>
+                    <Button
+                      className="h-8"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (subCategoryName.length === 0) {
+                          toast.warning(
+                            "Please enter a name for the sub category"
+                          );
+                        } else if (
+                          subCategories.some(
+                            (subCategory) =>
+                              subCategory.name === subCategoryName
+                          )
+                        ) {
+                          toast.warning("Sub category name already exists");
+                        } else {
+                          setSubCategories([
+                            ...subCategories,
+                            {
+                              name: subCategoryName,
+                              isPublic: subCategoryIsPublic,
+                            },
+                          ]);
+                          setSubCategoryName("");
+                          setSubCategoryIsPublic(true);
+                        }
+                      }}
+                    >
+                      Add
+                    </Button>
+                  </div>
+                  {subCategories.length > 0 && (
+                    <div className="flex flex-col space-y-4 p-4 rounded-md border">
+                      {subCategories.map((subCategory, index) => (
+                        <div
+                          key={index}
+                          className="flex justify-between items-center gap-2 w-full h-full bg-muted-foreground/10 p-2 rounded-md"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span>{index + 1}.</span>
+                            <span>{subCategory.name}</span>
+                            <Checkbox
+                              checked={subCategory.isPublic}
+                              onCheckedChange={(e) => {
+                                setSubCategories((prevSubCategories) =>
+                                  prevSubCategories.map((subCategory, i) =>
+                                    i === index
+                                      ? { ...subCategory, isPublic: e }
+                                      : subCategory
+                                  )
+                                );
+                              }}
+                            />
+                            <span>Is Public</span>
+                          </div>
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              const updatedSubCategories = [...subCategories];
+                              updatedSubCategories.splice(index, 1);
+                              setSubCategories(updatedSubCategories);
+                            }}
+                          >
+                            <Trash2 />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
                 <Button className="w-full" type="submit">
                   Submit

@@ -45,7 +45,21 @@ export const columns = [
     },
     enableHiding: false,
   },
-
+  {
+    accessorKey: "subCategoryCount",
+    header: ({ column }) => {
+      return (
+        <DataTableColumnHeader column={column} title="Sub Category Count" />
+      );
+    },
+    cell: ({ row }) => {
+      return (
+        <p className="text-center">
+          {row.original.subCategories && row.original.subCategories.length}
+        </p>
+      );
+    },
+  },
   {
     accessorKey: "status",
     header: ({ column }) => {

@@ -119,6 +119,11 @@ const updateProductSchema = z.object({
       required_error: "Please select a category.",
     })
     .optional(),
+  subCategory: z
+    .string({
+      required_error: "Please select a sub category.",
+    })
+    .optional(),
   size: z.string().min(1, { message: "Size must be at least 1 characters" }),
   isPublic: z.boolean().optional(),
 });
@@ -130,6 +135,7 @@ function UpdateProduct({ params }) {
   const [editProductDescriptionImage, setEditProductDescriptionImage] =
     useState(false);
   const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState("");
 
   const getProduct = useSelector((state) => state.product.getProduct.data);
   const getProductStatus = useSelector(
@@ -157,6 +163,7 @@ function UpdateProduct({ params }) {
       sellingPrice: getProduct?.sellingPrice || undefined,
       originalPrice: getProduct?.originalPrice || undefined,
       category: getProduct?.category || "",
+      subCategory: getProduct?.subCategory || "",
       size: String(getProduct?.size) || "",
       isPublic: getProduct?.isPublic || false,
     },
@@ -180,9 +187,11 @@ function UpdateProduct({ params }) {
         sellingPrice: getProduct.sellingPrice || undefined,
         originalPrice: getProduct.originalPrice || undefined,
         category: getProduct.category || "",
+        subCategory: getProduct.subCategory || "",
         size: String(getProduct?.size) || "",
         isPublic: getProduct.isPublic || false,
       });
+      setSelectedCategory(getProduct.category);
       setLoading(false);
     }
   }, [getProduct, form, getProductStatus]);
@@ -255,20 +264,20 @@ function UpdateProduct({ params }) {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="size"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Size</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Size" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="size"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Size</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Size" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                   <FormField
                     control={form.control}
                     name="category"
@@ -276,7 +285,10 @@ function UpdateProduct({ params }) {
                       <FormItem>
                         <FormLabel>Category</FormLabel>
                         <Select
-                          onValueChange={field.onChange}
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            setSelectedCategory(value);
+                          }}
                           defaultValue={field.value}
                         >
                           <FormControl>
@@ -298,6 +310,49 @@ function UpdateProduct({ params }) {
                         <FormMessage />
                       </FormItem>
                     )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="subCategory"
+                    render={({ field }) => {
+                      const selectedCategoryObj = getAllCategoriesNames.find(
+                        (category) => category.name === selectedCategory
+                      );
+                      const filteredSubCategories = selectedCategoryObj
+                        ? selectedCategoryObj.subCategories
+                        : [];
+
+                      return (
+                        <FormItem>
+                          <FormLabel>Sub Category</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a Sub Category" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {filteredSubCategories.map((subCategory) => (
+                                <SelectItem
+                                  key={subCategory._id}
+                                  value={subCategory.name}
+                                >
+                                  {subCategory.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                          <FormDescription>
+                            First select a category, then select a sub category.
+                          </FormDescription>
+                        </FormItem>
+                      );
+                    }}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">

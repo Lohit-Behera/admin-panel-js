@@ -1,5 +1,15 @@
 import mongoose, { Schema } from "mongoose";
-import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
+
+const subCategorySchema = new Schema({
+  name: {
+    type: String,
+    required: true,
+  },
+  isPublic: {
+    type: Boolean,
+    default: true,
+  },
+});
 
 const categorySchema = new Schema({
   name: {
@@ -14,8 +24,7 @@ const categorySchema = new Schema({
     type: Boolean,
     default: true,
   },
-});
-
-categorySchema.plugin(mongooseAggregatePaginate);
+  subCategories: [subCategorySchema],
+}, { timestamps: true });
 
 export const Category = mongoose.model("Category", categorySchema);
