@@ -27,7 +27,6 @@ const productSchema = new Schema(
     },
     subCategory: {
       type: String,
-      required: true,
     },
     thumbnail: {
       type: String,

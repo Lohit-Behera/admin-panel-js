@@ -12,10 +12,10 @@ const createCategory = asyncHandler(async (req, res) => {
     subCategories: Joi.array()
       .items(
         Joi.object({
-          name: Joi.string().min(1).max(50).required(),
-          isPublic: Joi.boolean().required(),
+          name: Joi.string().min(1).max(50).optional(),
+          isPublic: Joi.boolean().optional(),
         })
-    )
+    ).default([]),
   });
 
   // Validate request body
@@ -153,7 +153,7 @@ const updateCategory = asyncHandler(async (req, res) => {
           name: Joi.string().min(1).max(50).optional(),
           isPublic: Joi.boolean().optional(),
         })
-    )
+    ).default([]),
   });
 
   // Validate request body

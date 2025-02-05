@@ -12,7 +12,7 @@ const createProduct = asyncHandler(async (req, res) => {
     productDetail: Joi.string().min(10).required(),
     affiliateLink: Joi.string().uri().required(),
     category: Joi.string().required(),
-    subCategory: Joi.string().required(),
+    subCategory: Joi.string().optional().allow(""),
     size: Joi.string().min(1).required(),
     sellingPrice: Joi.number().positive().required(),
     originalPrice: Joi.number().positive().required(),
@@ -36,10 +36,11 @@ const createProduct = asyncHandler(async (req, res) => {
     sellingPrice,
     originalPrice,
     category,
-    subCategory,
     size,
     isPublic,
   } = value;
+
+  const subCategory = value.subCategory ? value.subCategory : "";
 
   // get thumbnail from the request
   const thumbnail = req.files.thumbnail ? req.files.thumbnail[0] : null;

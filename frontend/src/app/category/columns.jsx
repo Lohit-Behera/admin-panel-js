@@ -49,12 +49,14 @@ export const columns = [
     accessorKey: "subCategoryCount",
     header: ({ column }) => {
       return (
-        <DataTableColumnHeader column={column} title="Sub Category Count" />
+        <div className="flex justify-center">
+          <DataTableColumnHeader column={column} title="Sub Category Count" />
+        </div>
       );
     },
     cell: ({ row }) => {
       return (
-        <p className="text-center">
+        <p className="flex justify-center text-center">
           {row.original.subCategories && row.original.subCategories.length}
         </p>
       );

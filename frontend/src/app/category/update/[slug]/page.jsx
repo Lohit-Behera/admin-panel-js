@@ -93,7 +93,6 @@ function UpdateCategory({ params }) {
       thumbnail: values.thumbnail,
       subCategories: subCategories,
     };
-
     const updateCategoryPromise = dispatch(fetchUpdateCategory(data)).unwrap();
 
     toast.promise(updateCategoryPromise, {
