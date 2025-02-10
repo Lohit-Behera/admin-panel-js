@@ -383,7 +383,10 @@ const searchProduct = asyncHandler(async (req, res) => {
   }
   // search products
   const products = await Product.find({
-    name: { $regex: searchText, $options: "i" },
+    $or: [
+      { name: { $regex: searchText, $options: "i" } },
+      { category: { $regex: searchText, $options: "i" } }, 
+    ],
   });
   // validate the products
   if (!products) {
