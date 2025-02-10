@@ -386,6 +386,7 @@ const searchProduct = asyncHandler(async (req, res) => {
     $or: [
       { name: { $regex: searchText, $options: "i" } },
       { category: { $regex: searchText, $options: "i" } }, 
+      { subCategory: { $regex: searchText, $options: "i" } },
     ],
   });
   // validate the products
