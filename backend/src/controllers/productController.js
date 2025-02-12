@@ -375,38 +375,20 @@ const deleteProduct = asyncHandler(async (req, res) => {
 const searchProduct = asyncHandler(async (req, res) => {
   // get search text from the request
   const searchText = req.query.search;
-  // validate the search text
-  if (!searchText) {
-    return res
-      .status(400)
-      .json(new ApiResponse(400, null, "Search text is required"));
+  const categoryText = req.query.category
+  const subCategoryText = req.query.subCategory
+  
+  // get products by search text
+  let products;
+  if (searchText){
+    products = await Product.find({name: { $regex: searchText, $options: "i" }})
   }
-  // search products
-  const products = await Product.find({
-    $or: [
-      { name: { $regex: searchText, $options: "i" } },
-      { category: { $regex: searchText, $options: "i" } }, 
-      { subCategory: { $regex: searchText, $options: "i" } },
-    ],
-  });
-  // validate the products
-  if (!products) {
-    return res
-      .status(404)
-      .json(new ApiResponse(404, null, "Products not found"));
+  if (categoryText){
+    products = await Product.find({ category: categoryText })
   }
-  // send the response
-  return res
-    .status(200)
-    .json(new ApiResponse(200, products, "Products found successfully"));
-});
-
-// get products by sub category
-const getProductsBySubCategory = asyncHandler(async (req, res) => {
-  // get sub category from the request
-  const subCategory = req.params.subCategory;
-  // get products by sub category
-  const products = await Product.find({ subCategory  }).sort({ createdAt: -1 });
+  if (subCategoryText){
+    products = await Product.find({ subCategory: subCategoryText })
+  }
   // validate the products
   if (!products || products.length === 0) {
     return res
@@ -427,5 +409,4 @@ export {
   updateProduct,
   deleteProduct,
   searchProduct,
-  getProductsBySubCategory
 };

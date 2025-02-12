@@ -9,7 +9,6 @@ import {
   updateProduct,
   deleteProduct,
   searchProduct,
-  getProductsBySubCategory
 } from "../controllers/productController.js";
 
 const productRouter = Router();
@@ -38,8 +37,5 @@ productRouter.delete("/delete/:productId", deleteProduct);
 
 // search product
 productRouter.get("/", searchProduct);
-
-// get products by sub category
-productRouter.get("/sub-category/:subCategory", getProductsBySubCategory);
 
 export default productRouter;
