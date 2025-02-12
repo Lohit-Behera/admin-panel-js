@@ -401,6 +401,24 @@ const searchProduct = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, products, "Products found successfully"));
 });
 
+// get products by sub category
+const getProductsBySubCategory = asyncHandler(async (req, res) => {
+  // get sub category from the request
+  const subCategory = req.params.subCategory;
+  // get products by sub category
+  const products = await Product.find({ subCategory  }).sort({ createdAt: -1 });
+  // validate the products
+  if (!products || products.length === 0) {
+    return res
+      .status(404)
+      .json(new ApiResponse(404, null, "Products not found"));
+  }
+  // send the response
+  return res
+    .status(200)
+    .json(new ApiResponse(200, products, "Products found successfully"));
+});
+
 export {
   createProduct,
   getProduct,
@@ -409,4 +427,5 @@ export {
   updateProduct,
   deleteProduct,
   searchProduct,
+  getProductsBySubCategory
 };
