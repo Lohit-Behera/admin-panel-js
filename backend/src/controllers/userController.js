@@ -3,6 +3,39 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../model/userModel.js";
 import Joi from "joi";
 
+
+const createUser = asyncHandler(async (req, res) => {
+  // joi schema for validation
+  const schema = Joi.object({
+    name: Joi.string().min(3).max(50).required(),
+    email: Joi.string().email().required(),
+    password: Joi.string().required(),
+  });
+
+  // Validate request body
+  const { error, value } = schema.validate(req.body);
+  if (error) {
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, error.details[0].message));
+  }
+
+  // Extract validated fields
+  const { name, email, password } = value;
+
+  // Create user
+  const user = await User.create({
+    name,
+    email,
+    password,
+  });
+
+  // send the response
+  return res
+    .status(201)
+    .json(new ApiResponse(201, user, "User created successfully"));
+});
+
 const login = asyncHandler(async (req, res) => {
   // joi schema for validation
   const schema = Joi.object({
@@ -41,4 +74,4 @@ const login = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, user, "Login successful"));
 });
 
-export { login };
+export {createUser, login };
