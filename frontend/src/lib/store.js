@@ -5,6 +5,7 @@ import categorySlice from "./features/categorySlice";
 import productSlice from "./features/productSlice";
 import blogSlice from "./features/blogSlice";
 import bannerSlice from "./features/bannerSlice";
+import collaborationSlice from "./features/collaborationSlice";
 
 export const makeStore = () => {
   return configureStore({
@@ -14,7 +15,8 @@ export const makeStore = () => {
       category: categorySlice,
       product: productSlice,
       blog: blogSlice,
-      banner: bannerSlice
+      banner: bannerSlice,
+      collaboration: collaborationSlice,
     },
   });
 };

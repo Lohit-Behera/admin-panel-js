@@ -3,6 +3,7 @@
 import * as React from "react";
 import {
   GalleryVerticalEnd,
+  Handshake,
   List,
   Minus,
   Plus,
@@ -94,6 +95,18 @@ const data = {
           icon: <List />,
           title: "All Banner",
           url: "/banner",
+        },
+      ],
+    },
+
+    {
+      title: "Collaboration",
+      icon: <Handshake />,
+      items: [
+        {
+          icon: <List />,
+          title: "All Collaboration",
+          url: "/collaboration",
         },
       ],
     },
